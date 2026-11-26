@@ -1,0 +1,79 @@
+// Controlador do jogo: dia, dinheiro, imposto e fim de jogo.
+
+// --- Valores ajustáveis (placeholders de balanceamento) ---
+day_length_seconds = 180;  // Duração de cada dia, em segundos
+tax_base = 20;             // Imposto cobrado no fim do dia 1
+tax_growth = 1.2;          // Multiplicador do imposto a cada dia (1.2 = +20%)
+starting_money = 0;
+
+// Preço de venda de cada tipo de item
+item_prices = {};
+item_prices[$ "log"] = 3;
+item_prices[$ "stone"] = 5;
+
+// --- Estado ---
+state = "playing";  // "playing" ou "game_over"
+day = 1;
+day_length = day_length_seconds * game_get_speed(gamespeed_fps);  // Em frames
+day_timer = day_length;
+money = starting_money;
+days_survived = 0;  // Dias completos (preenchido no fim de jogo)
+failed_tax = 0;     // Imposto que não pôde ser pago (preenchido no fim de jogo)
+
+// Aviso temporário na tela
+notice_text = "";
+notice_timer = 0;
+
+/// Imposto cobrado no fim do dia informado
+get_tax = function(_day) {
+    return round(tax_base * power(tax_growth, _day - 1));
+};
+
+/// Mostra um aviso por 3 segundos
+show_notice = function(_text) {
+    notice_text = _text;
+    notice_timer = 3 * game_get_speed(gamespeed_fps);
+};
+
+/// Vende tudo o que o inventário tem e tem preço. Retorna o total ganho.
+sell_inventory = function() {
+    var gui = instance_find(obj_draw_GUI, 0);
+    if (gui == noone) return 0;
+
+    var total = 0;
+    for (var i = 0; i < array_length(gui.inventory); i++) {
+        var slot = gui.inventory[i];
+        if (slot == undefined) continue;
+
+        var price = item_prices[$ slot.type];
+        if (price == undefined) continue;  // Item sem preço não é vendido
+
+        total += price * slot.qty;
+        gui.inventory[i] = undefined;
+    }
+
+    if (total > 0) {
+        money += total;
+        show_notice("Vendido: +" + string(total) + " moedas");
+    } else {
+        show_notice("Nada para vender");
+    }
+    return total;
+};
+
+/// Cobra o imposto do dia: paga e começa o próximo dia, ou termina o jogo
+end_day = function() {
+    var tax = get_tax(day);
+
+    if (money >= tax) {
+        money -= tax;
+        show_notice("Dia " + string(day) + " completo - imposto pago: " + string(tax));
+        day += 1;
+        day_timer = day_length;
+    } else {
+        state = "game_over";
+        failed_tax = tax;
+        days_survived = day - 1;
+        instance_deactivate_all(true);  // Congela o jogo (este controlador continua ativo)
+    }
+};
