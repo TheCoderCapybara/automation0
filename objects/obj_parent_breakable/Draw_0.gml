@@ -1,25 +1,26 @@
 draw_self();
 
-if (point_in_rectangle(mouse_x, mouse_y, bbox_left, bbox_top, bbox_right, bbox_bottom) && point_distance(obj_player.x, obj_player.y, x, y) <= obj_player.range){
-	var grid_x = floor(x / 64) * 64 + 32;
-	var grid_y = floor(y / 64) * 64 + 32;
-	draw_sprite(spr_select, 0, grid_x, grid_y);
+// Destaca o objeto sob o cursor quando o jogador está ao alcance
+// (x e y já estão centralizados no tile, ver obj_parent_centralize)
+if (instance_exists(obj_player)
+    && point_in_rectangle(mouse_x, mouse_y, bbox_left, bbox_top, bbox_right, bbox_bottom)
+    && point_distance(obj_player.x, obj_player.y, x, y) <= obj_player.range) {
+    draw_sprite(spr_select, 0, x, y);
 }
 
-// Desenha a barra de vida se ativa
+// Barra de vida, visível enquanto o alarm[0] estiver ativo
 if (alarm[0] > 0) {
-    // Calcula a posição da barra acima do sprite
-    var sprite_x = x - sprite_xoffset; // Canto superior-esquerdo do sprite
-    var sprite_y = y - sprite_yoffset; // Canto superior-esquerdo do sprite
-    var bar_x = sprite_x + sprite_width / 2 - 32; // Centraliza a barra (64 / 2)
-    var bar_y = sprite_y - 6;
-    
-    // Desenha a borda da barra (spr_health_bar, 64x6)
+    var bar_w = sprite_get_width(spr_health_bar);
+    var bar_h = sprite_get_height(spr_health_bar);
+    var fill_h = sprite_get_height(spr_health);
+
+    // Centralizada acima do sprite
+    var bar_x = x - sprite_xoffset + sprite_width / 2 - bar_w / 2;
+    var bar_y = y - sprite_yoffset - 6;
+
     draw_sprite(spr_health_bar, 0, bar_x, bar_y);
-    
-    // Calcula a largura do preenchimento com base na vida
-    var health_width = (hp / hp_max) * 64; // Proporção da vida para 64 pixels
-    
-    // Desenha o preenchimento (spr_health, 64x3) esticado proporcionalmente
-    draw_sprite_stretched(spr_health, 0, bar_x, bar_y + 1.5, health_width, 3);
+
+    // Preenchimento proporcional à vida, centralizado verticalmente na borda
+    var fill_w = clamp(hp / hp_max, 0, 1) * bar_w;
+    draw_sprite_stretched(spr_health, 0, bar_x, bar_y + (bar_h - fill_h) / 2, fill_w, fill_h);
 }

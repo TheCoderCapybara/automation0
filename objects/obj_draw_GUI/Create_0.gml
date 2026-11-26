@@ -1,23 +1,36 @@
-// Variáveis de inventário
-show_inventory = false; // Controla visibilidade do inventário
-slot_size = 32;         // Tamanho de cada slot (32x32 pixels)
-inventory_cols = 10;    // 10 colunas
-inventory_rows = 8;     // 8 linhas
-pack_size = 99;
+// Inventário
+show_inventory = false;  // Visibilidade do inventário
+slot_size = 32;          // Cada slot tem 32x32 pixels
+inventory_cols = 10;
+inventory_rows = 8;
+pack_size = 99;          // Máximo de itens por slot
 
-// Calcula a largura e altura total da grade de inventário
-var inventory_width = inventory_cols * slot_size;
-var inventory_height = inventory_rows * slot_size;
+// Slots em ordem de leitura (esquerda para direita, cima para baixo).
+// undefined = vazio; ocupado = { type: "log", qty: 3 }
+inventory = array_create(inventory_cols * inventory_rows, undefined);
 
-// Centraliza o inventário na tela de 1280x720
-inventory_x = (960 - inventory_width) / 2;
-inventory_y = (720 - inventory_height) / 2;
+// Sprite exibido para cada tipo de item
+item_sprites = {};
+item_sprites[$ "log"] = spr_log;
+item_sprites[$ "stone"] = spr_stone;
 
-// Inicializa as estruturas de dados do inventário
-inventory_items = ds_grid_create(inventory_cols, inventory_rows);
-ds_grid_clear(inventory_items, "");
-inventory_quantities = ds_grid_create(inventory_cols, inventory_rows);
-ds_grid_clear(inventory_quantities, 0);
-item_sprites = ds_map_create();
-item_sprites[?"log"] = spr_log; // Substitua por spr_log_item se criado
-item_sprites[?"stone"] = spr_stone; // Substitua por spr_log_item se criado
+// A GUI tem tamanho fixo, independente da escala da janela
+gui_w = 1280;
+gui_h = 720;
+display_set_gui_size(gui_w, gui_h);
+
+// Painel do inventário centralizado na GUI
+panel_w = sprite_get_width(spr_back_inventory);
+panel_h = sprite_get_height(spr_back_inventory);
+panel_x = (gui_w - panel_w) / 2;
+panel_y = (gui_h - panel_h) / 2;
+
+// Grade de slots, com a margem do painel
+inventory_x = panel_x + 8;
+inventory_y = panel_y + 16;
+
+// Botão de fechar, no canto superior direito do painel
+close_w = sprite_get_width(spr_close_button);
+close_h = sprite_get_height(spr_close_button);
+close_x = panel_x + panel_w - close_w - 4;
+close_y = panel_y + 4;
