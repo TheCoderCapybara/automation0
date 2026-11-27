@@ -4,9 +4,11 @@ var cx = gui_w / 2;
 draw_set_halign(fa_center);
 draw_set_valign(fa_middle);
 
-// Título do jogo
+// Título do jogo (fica escondido nas configurações)
 draw_set_color(c_white);
-draw_text_transformed(cx, title_y, title_text, 5, 5, 0);
+if (screen != "settings") {
+    draw_text_transformed(cx, title_y, title_text, 5, 5, 0);
+}
 
 // Subtítulo da tela atual
 if (screen == "new_game") {
@@ -34,9 +36,40 @@ if (screen == "new_game") {
     }
 }
 
-// Aba de controles: dicas das teclas fixas
+// Aba de controles: nota das teclas fixas, na coluna das legendas, logo abaixo da última linha
 if (screen == "settings" && settings_tab == "controls") {
-    draw_text(cx, 590, "Fixas: Esc pausa, M menu na pausa, clique esquerdo ataca");
+    var note_x = row_x - 20;
+    var note_y = row_y + row_step * (array_length(control_actions) + 1) + 4;
+    draw_set_halign(fa_right);
+    draw_text(note_x, note_y, "Teclas fixas:");
+    draw_text(note_x, note_y + 20, "Esc - pausar");
+    draw_text(note_x, note_y + 40, "M - menu (na pausa)");
+    draw_text(note_x, note_y + 60, "Clique esquerdo - atacar");
+    draw_set_halign(fa_center);
+}
+
+// Aba de som: legenda e barra do volume geral
+if (screen == "settings" && settings_tab == "audio") {
+    var volume = global.settings.audio.master_volume;
+    var bar_center_y = volume_bar_y + volume_bar_h / 2;
+
+    // Legenda à esquerda
+    draw_set_halign(fa_right);
+    draw_text_transformed(volume_bar_x - 20, bar_center_y, "Volume geral", 1.5, 1.5, 0);
+
+    // Trilho, parte preenchida e botão deslizante
+    draw_set_color(make_color_rgb(35, 60, 90));
+    draw_rectangle(volume_bar_x, bar_center_y - 6, volume_bar_x + volume_bar_w, bar_center_y + 6, false);
+    draw_set_color(make_color_rgb(70, 110, 150));
+    draw_rectangle(volume_bar_x, bar_center_y - 6, volume_bar_x + volume_bar_w * volume, bar_center_y + 6, false);
+    draw_set_color(c_white);
+    draw_rectangle(volume_bar_x, bar_center_y - 6, volume_bar_x + volume_bar_w, bar_center_y + 6, true);
+    draw_rectangle(volume_bar_x + volume_bar_w * volume - 6, bar_center_y - 14, volume_bar_x + volume_bar_w * volume + 6, bar_center_y + 14, false);
+
+    // Porcentagem à direita da barra
+    draw_set_halign(fa_left);
+    draw_text_transformed(volume_bar_x + volume_bar_w + 20, bar_center_y, string(round(volume * 100)) + "%", 1.5, 1.5, 0);
+    draw_set_halign(fa_center);
 }
 
 // Botões
@@ -63,11 +96,6 @@ for (var i = 0; i < array_length(buttons); i++) {
         draw_set_halign(fa_right);
         draw_text_transformed(button.x - 20, button.y + button.h / 2, button.caption, 1.5, 1.5, 0);
         draw_set_halign(fa_center);
-    }
-
-    // Valor do volume entre o - e o +
-    if (variable_struct_exists(button, "value_text")) {
-        draw_text_transformed(button.x + 130 + 30, button.y + button.h / 2, button.value_text, 1.5, 1.5, 0);
     }
 }
 

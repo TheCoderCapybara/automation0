@@ -19,6 +19,20 @@ button_h = 64;
 button_gap = 20;
 first_button_y = 300;  // Y do botão mais acima do menu principal
 
+// --- Linhas da tela de configurações (legenda à esquerda e controle à direita) ---
+row_x = gui_w / 2 + 20;
+row_y = 215;
+row_w = 260;
+row_h = 40;
+row_step = 48;
+
+// --- Barra de volume ---
+volume_bar_x = row_x;
+volume_bar_y = row_y;
+volume_bar_w = row_w;
+volume_bar_h = row_h;
+dragging_volume = false;  // true enquanto o jogador arrasta a barra
+
 // --- Estado ---
 screen = "main";         // "main", "new_game" ou "settings"
 settings_tab = "controls";  // "controls", "video" ou "audio"
@@ -78,11 +92,6 @@ build_buttons = function() {
         array_push(list, make_button("tab_audio", "Som", tab_x + (tab_w + button_gap) * 2, 130, tab_w, true, ""));
 
         // Linhas da aba atual: legenda à esquerda e botão à direita
-        var row_x = cx + 20;
-        var row_w = 260;
-        var row_y = 230;
-        var row_step = 54;
-
         if (settings_tab == "controls") {
             for (var i = 0; i < array_length(control_actions); i++) {
                 var action = control_actions[i];
@@ -91,11 +100,11 @@ build_buttons = function() {
                     key_text = "Aperte uma tecla...";
                 }
                 var button = make_button("bind_" + action, key_text, row_x, row_y + row_step * i, row_w, true, control_labels[$ action]);
-                button.h = 44;
+                button.h = row_h;
                 array_push(list, button);
             }
             var reset_button = make_button("reset_controls", "Restaurar padroes", row_x, row_y + row_step * array_length(control_actions), row_w, true, "");
-            reset_button.h = 44;
+            reset_button.h = row_h;
             array_push(list, reset_button);
         }
 
@@ -103,34 +112,27 @@ build_buttons = function() {
             var video = global.settings.video;
             var max_scale = video_get_max_scale();
 
+            // Resolução da janela (sempre múltiplo da resolução base, para os pixels ficarem nítidos)
             var scale_text = "Automatica";
             if (video.window_scale != 0) {
-                scale_text = string(min(video.window_scale, max_scale)) + "x";
+                var scale = min(video.window_scale, max_scale);
+                scale_text = string(BASE_WIDTH * scale) + " x " + string(BASE_HEIGHT * scale);
             }
 
             var fullscreen_button = make_button("toggle_fullscreen", video.fullscreen ? "Ligada" : "Desligada", row_x, row_y, row_w, true, "Tela cheia");
-            var scale_button = make_button("cycle_scale", scale_text, row_x, row_y + row_step, row_w, !video.fullscreen, "Tamanho da janela");
+            var scale_button = make_button("cycle_scale", scale_text, row_x, row_y + row_step, row_w, !video.fullscreen, "Resolucao da janela");
             var vsync_button = make_button("toggle_vsync", video.vsync ? "Ligado" : "Desligado", row_x, row_y + row_step * 2, row_w, true, "Vsync");
-            fullscreen_button.h = 44;
-            scale_button.h = 44;
-            vsync_button.h = 44;
+            fullscreen_button.h = row_h;
+            scale_button.h = row_h;
+            vsync_button.h = row_h;
             array_push(list, fullscreen_button);
             array_push(list, scale_button);
             array_push(list, vsync_button);
         }
 
-        if (settings_tab == "audio") {
-            var volume_text = string(round(global.settings.audio.master_volume * 100)) + "%";
-            var down_button = make_button("volume_down", "-", row_x, row_y, 60, true, "Volume geral");
-            var up_button = make_button("volume_up", "+", row_x + row_w - 60, row_y, 60, true, "");
-            down_button.h = 44;
-            up_button.h = 44;
-            down_button.value_text = volume_text;
-            array_push(list, down_button);
-            array_push(list, up_button);
-        }
+        // Aba de som: o volume é uma barra desenhada e tratada à parte (ver Step e Draw)
 
-        array_push(list, make_button("back", "Voltar", left, 620, button_w, true, ""));
+        array_push(list, make_button("back", "Voltar", left, 640, button_w, true, ""));
     }
 
     return list;
@@ -217,7 +219,7 @@ run_action = function(_id) {
             break;
 
         case "cycle_scale":
-            // Automática -> 1x -> 2x ... até o máximo que cabe na tela -> automática
+            // Automática -> 1280x720 -> 2560x1440 ... até o máximo que cabe na tela -> automática
             var next_scale = min(video.window_scale, video_get_max_scale()) + 1;
             if (next_scale > video_get_max_scale()) {
                 next_scale = 0;
@@ -230,14 +232,6 @@ run_action = function(_id) {
         case "toggle_vsync":
             video.vsync = !video.vsync;
             settings_apply_video();
-            settings_save();
-            break;
-
-        case "volume_down":
-        case "volume_up":
-            var change = (_id == "volume_up") ? 0.1 : -0.1;
-            global.settings.audio.master_volume = clamp(round((global.settings.audio.master_volume + change) * 10) / 10, 0, 1);
-            settings_apply_audio();
             settings_save();
             break;
     }
