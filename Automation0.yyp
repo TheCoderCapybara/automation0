@@ -51,6 +51,7 @@
     {"id":{"name":"obj_chao_jangada","path":"objects/obj_chao_jangada/obj_chao_jangada.yy",},},
     {"id":{"name":"obj_draw_GUI","path":"objects/obj_draw_GUI/obj_draw_GUI.yy",},},
     {"id":{"name":"obj_game","path":"objects/obj_game/obj_game.yy",},},
+    {"id":{"name":"obj_island","path":"objects/obj_island/obj_island.yy",},},
     {"id":{"name":"obj_log","path":"objects/obj_log/obj_log.yy",},},
     {"id":{"name":"obj_mouse","path":"objects/obj_mouse/obj_mouse.yy",},},
     {"id":{"name":"obj_parent_breakable","path":"objects/obj_parent_breakable/obj_parent_breakable.yy",},},

@@ -24,6 +24,11 @@ failed_tax = 0;     // Imposto que não pôde ser pago (preenchido no fim de jog
 notice_text = "";
 notice_timer = 0;
 
+// Tela de fim de jogo: escolha da seed do próximo mundo
+game_over_mode = "menu";  // "menu" (escolher) ou "typing" (digitando a seed)
+seed_input = "";          // Seed digitada pelo jogador
+seed_max_digits = 9;      // Máximo de dígitos da seed
+
 /// Imposto cobrado no fim do dia informado
 get_tax = function(_day) {
     return round(tax_base * power(tax_growth, _day - 1));
@@ -59,6 +64,12 @@ sell_inventory = function() {
         show_notice("Nada para vender");
     }
     return total;
+};
+
+/// Começa um novo mundo com a seed informada: a ilha é gerada de novo ao reiniciar a sala
+start_new_world = function(_seed) {
+    global.world_seed = _seed;
+    room_restart();
 };
 
 /// Cobra o imposto do dia: paga e começa o próximo dia, ou termina o jogo

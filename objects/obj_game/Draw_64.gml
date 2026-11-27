@@ -51,7 +51,20 @@ if (state == "playing") {
     draw_text_transformed(cx, cy - 20, "Sem dinheiro para o imposto do dia " + string(day), 1.5, 1.5, 0);
     draw_text_transformed(cx, cy + 10, "Imposto: " + string(failed_tax) + "   Moedas: " + string(money), 1.5, 1.5, 0);
     draw_text_transformed(cx, cy + 50, "Dias sobrevividos: " + string(days_survived), 1.5, 1.5, 0);
-    draw_text_transformed(cx, cy + 110, "Pressione R para reiniciar", 1.5, 1.5, 0);
+    // Seed do mundo que acabou, para o jogador poder repeti-la depois
+    draw_text_transformed(cx, cy + 90, "Seed deste mundo: " + string(global.world_seed), 1.5, 1.5, 0);
+
+    if (game_over_mode == "menu") {
+        // Escolha da seed do próximo mundo
+        draw_text_transformed(cx, cy + 140, "R - Novo mundo com seed aleatoria", 1.5, 1.5, 0);
+        draw_text_transformed(cx, cy + 170, "D - Digitar uma seed", 1.5, 1.5, 0);
+    } else {
+        // Campo de digitação, com um cursor que pisca a cada meio segundo
+        var cursor = ((current_time div 500) mod 2 == 0) ? "_" : " ";
+        draw_text_transformed(cx, cy + 140, "Digite a seed (somente numeros):", 1.5, 1.5, 0);
+        draw_text_transformed(cx, cy + 175, seed_input + cursor, 2, 2, 0);
+        draw_text_transformed(cx, cy + 215, "Enter - Confirmar   Esc - Voltar", 1.5, 1.5, 0);
+    }
 
     draw_set_halign(fa_left);
     draw_set_valign(fa_top);
