@@ -1,15 +1,15 @@
 // Controlador do jogo: dia, dinheiro, imposto e fim de jogo.
 
 // --- Valores ajustáveis (placeholders de balanceamento) ---
-day_length_seconds = 180;  // Duração de cada dia, em segundos
+day_length_seconds = 60;   // Duração de cada dia, em segundos
 tax_base = 20;             // Imposto cobrado no fim do dia 1
 tax_growth = 1.2;          // Multiplicador do imposto a cada dia (1.2 = +20%)
 starting_money = 0;
 
 // Preço de venda de cada tipo de item
 item_prices = {};
-item_prices[$ "log"] = 3;
-item_prices[$ "stone"] = 5;
+item_prices[$ "log"] = 1;
+item_prices[$ "stone"] = 2;
 
 // --- Estado ---
 state = "playing";  // "playing", "paused" ou "game_over"
