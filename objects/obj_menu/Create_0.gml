@@ -34,7 +34,7 @@ volume_bar_h = row_h;
 dragging_volume = false;  // true enquanto o jogador arrasta a barra
 
 // --- Estado ---
-screen = "main";         // "main", "new_game" ou "settings"
+screen = "main";         // "main", "new_game", "settings" ou "quit"
 settings_tab = "controls";  // "controls", "video" ou "audio"
 waiting_key = "";        // Ação que espera uma tecla nova (vazio = nenhuma)
 buttons = [];            // Botões da tela atual (refeitos todo frame)
@@ -75,6 +75,14 @@ build_buttons = function() {
         array_push(list, make_button("continue", "Continuar", left, first_button_y, button_w, has_save, ""));
         array_push(list, make_button("new_game", "Criar novo jogo", left, first_button_y + step, button_w, true, ""));
         array_push(list, make_button("settings", "Configuracoes", left, first_button_y + step * 2, button_w, true, ""));
+        array_push(list, make_button("quit", "Sair do jogo", left, first_button_y + step * 3, button_w, true, ""));
+    }
+
+    if (screen == "quit") {
+        // Sim e Não lado a lado, abaixo da pergunta
+        var half_w = (button_w - button_gap) / 2;
+        array_push(list, make_button("quit_yes", "Sim", left, 400, half_w, true, ""));
+        array_push(list, make_button("quit_no", "Nao", left + half_w + button_gap, 400, half_w, true, ""));
     }
 
     if (screen == "new_game") {
@@ -110,17 +118,15 @@ build_buttons = function() {
 
         if (settings_tab == "video") {
             var video = global.settings.video;
-            var max_scale = video_get_max_scale();
 
-            // Resolução da janela (sempre múltiplo da resolução base, para os pixels ficarem nítidos)
-            var scale_text = "Automatica";
-            if (video.window_scale != 0) {
-                var scale = min(video.window_scale, max_scale);
-                scale_text = string(BASE_WIDTH * scale) + " x " + string(BASE_HEIGHT * scale);
+            // Resolução da janela: automática ou uma das padrões 16:9
+            var size_text = "Automatica";
+            if (video.window_width != 0) {
+                size_text = string(video.window_width) + " x " + string(video.window_width * 9 / 16);
             }
 
             var fullscreen_button = make_button("toggle_fullscreen", video.fullscreen ? "Ligada" : "Desligada", row_x, row_y, row_w, true, "Tela cheia");
-            var scale_button = make_button("cycle_scale", scale_text, row_x, row_y + row_step, row_w, !video.fullscreen, "Resolucao da janela");
+            var scale_button = make_button("cycle_scale", size_text, row_x, row_y + row_step, row_w, !video.fullscreen, "Resolucao da janela");
             var vsync_button = make_button("toggle_vsync", video.vsync ? "Ligado" : "Desligado", row_x, row_y + row_step * 2, row_w, true, "Vsync");
             fullscreen_button.h = row_h;
             scale_button.h = row_h;
@@ -153,6 +159,18 @@ run_action = function(_id) {
             // O obj_island recria o mundo salvo quando a sala começa
             global.continue_game = true;
             room_goto(Room1);
+            break;
+
+        case "quit":
+            screen = "quit";
+            break;
+
+        case "quit_yes":
+            game_end();
+            break;
+
+        case "quit_no":
+            screen = "main";
             break;
 
         case "new_game":
@@ -218,13 +236,16 @@ run_action = function(_id) {
             settings_save();
             break;
 
+
         case "cycle_scale":
-            // Automática -> 1280x720 -> 2560x1440 ... até o máximo que cabe na tela -> automática
-            var next_scale = min(video.window_scale, video_get_max_scale()) + 1;
-            if (next_scale > video_get_max_scale()) {
-                next_scale = 0;
+            // Automática -> cada resolução padrão que cabe na tela, da menor para a maior -> automática
+            var options = video_get_available_resolutions();
+            var current_index = array_get_index(options, video.window_width);  // -1 se for automática
+            if (current_index + 1 >= array_length(options)) {
+                video.window_width = 0;
+            } else {
+                video.window_width = options[current_index + 1];
             }
-            video.window_scale = next_scale;
             settings_apply_video();
             settings_save();
             break;

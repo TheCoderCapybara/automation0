@@ -18,6 +18,11 @@ if (screen == "settings") {
     draw_text_transformed(cx, 80, "Configuracoes", 2, 2, 0);
 }
 
+// Tela de saída: pergunta de confirmação
+if (screen == "quit") {
+    draw_text_transformed(cx, 320, "Tem certeza que deseja sair do jogo?", 2, 2, 0);
+}
+
 // Tela de novo jogo: campo da seed
 if (screen == "new_game") {
     var cursor = ((current_time div 500) mod 2 == 0) ? "_" : " ";

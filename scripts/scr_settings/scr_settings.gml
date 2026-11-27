@@ -21,8 +21,8 @@ function settings_get_defaults() {
         },
         video: {
             fullscreen: true,  // O projeto já começa em tela cheia
-            window_scale: 0,   // 0 = automática (maior múltiplo inteiro que cabe na tela)
-            vsync: false
+            window_width: 0,   // Largura da janela (a altura segue a proporção 16:9); 0 = automática
+            vsync: true
         },
         audio: {
             master_volume: 1   // De 0 a 1
@@ -71,9 +71,10 @@ function settings_load() {
             global.settings.video.fullscreen = (fullscreen != 0);
         }
 
-        var window_scale = saved_video[$ "window_scale"];
-        if (is_real(window_scale)) {
-            global.settings.video.window_scale = clamp(floor(window_scale), 0, 8);
+        // Só aceita a automática (0) ou uma das resoluções padrão
+        var window_width = saved_video[$ "window_width"];
+        if (is_real(window_width) && (window_width == 0 || array_contains(video_get_resolutions(), window_width))) {
+            global.settings.video.window_width = window_width;
         }
 
         var vsync = saved_video[$ "vsync"];
@@ -108,12 +109,56 @@ function settings_apply() {
     settings_apply_audio();
 }
 
-/// @desc Maior escala inteira da resolução base que cabe na tela.
-function video_get_max_scale() {
-    return max(1, min(display_get_width() div BASE_WIDTH, display_get_height() div BASE_HEIGHT));
+/// @desc Larguras das resoluções padrão em 16:9 (a altura é a largura * 9 / 16), da menor para a maior.
+function video_get_resolutions() {
+    return [1024, 1280, 1600, 1920, 2560, 3840];
 }
 
-/// @desc Aplica tela cheia ou janela, escala, superfície da aplicação e vsync.
+/// @desc Diz se uma janela com essa largura cabe na tela (com folga para a barra de título e a barra de tarefas).
+/// @param {Real} _width Largura da janela
+function video_resolution_fits(_width) {
+    return (_width <= display_get_width() && _width * 9 / 16 <= display_get_height() - 80);
+}
+
+/// @desc Resoluções de janela que o jogador pode escolher: as padrão que cabem na tela (sempre há pelo menos uma).
+function video_get_available_resolutions() {
+    var resolutions = video_get_resolutions();
+    var available = [];
+    for (var i = 0; i < array_length(resolutions); i++) {
+        if (video_resolution_fits(resolutions[i])) {
+            array_push(available, resolutions[i]);
+        }
+    }
+
+    // Em telas muito pequenas, ainda oferece a menor
+    if (array_length(available) == 0) {
+        array_push(available, resolutions[0]);
+    }
+    return available;
+}
+
+/// @desc Tamanho do jogo na tela, sempre em 16:9.
+/// Tela cheia: encaixa na tela. Janela: a resolução escolhida (automática = a maior que cabe na tela).
+/// @param {Bool} _fullscreen Se está em tela cheia
+/// @returns {Struct} { w, h }
+function video_get_size(_fullscreen) {
+    // Tela cheia: o jogo ocupa o máximo da tela mantendo a proporção
+    if (_fullscreen) {
+        var fit = min(display_get_width() / BASE_WIDTH, display_get_height() / BASE_HEIGHT);
+        return { w: floor(BASE_WIDTH * fit), h: floor(BASE_HEIGHT * fit) };
+    }
+
+    // Janela: a resolução escolhida, ou a maior que cabe quando ela não cabe (ou é automática)
+    var available = video_get_available_resolutions();
+    var width = available[array_length(available) - 1];
+    var chosen = global.settings.video.window_width;
+    if (chosen != 0 && array_contains(available, chosen)) {
+        width = chosen;
+    }
+    return { w: width, h: width * 9 / 16 };
+}
+
+/// @desc Aplica tela cheia ou janela, resolução, superfície da aplicação e vsync.
 function settings_apply_video() {
     var video = global.settings.video;
 
@@ -122,21 +167,17 @@ function settings_apply_video() {
         window_set_fullscreen(video.fullscreen);
     }
 
-    // Escala: 0 = automática; uma escala maior do que cabe na tela é reduzida
-    var max_scale = video_get_max_scale();
-    var scale = max_scale;
-    if (video.window_scale != 0) {
-        scale = min(video.window_scale, max_scale);
-    }
+    // Tamanho do jogo (em tela cheia o sistema cuida da janela)
+    var size = video_get_size(video.fullscreen);
 
-    // Em janela, ajusta o tamanho e centraliza (em tela cheia o sistema cuida do tamanho)
+    // Em janela, ajusta o tamanho e centraliza
     if (!video.fullscreen) {
-        window_set_size(BASE_WIDTH * scale, BASE_HEIGHT * scale);
+        window_set_size(size.w, size.h);
         window_center();
     }
 
-    // A superfície da aplicação acompanha a escala, para os pixels ficarem nítidos
-    surface_resize(application_surface, BASE_WIDTH * scale, BASE_HEIGHT * scale);
+    // A superfície da aplicação acompanha a resolução
+    surface_resize(application_surface, size.w, size.h);
 
     // O vsync só é reaplicado quando muda (o display_reset recria a tela)
     if (global.applied_vsync != video.vsync) {
