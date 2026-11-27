@@ -1,5 +1,7 @@
-// Controlador de renascimento: repõe árvores e pedras na ilha,
+// Gerador de recursos: faz nascer árvores, pedras e o que mais existir,
 // sempre em tiles de grama livres (nunca sobre o mar).
+// O ritmo depende de quantos recursos já existem (todos os tipos juntos) e
+// o tipo de cada novo recurso é sorteado por porcentagem, conforme a qualidade.
 
 // Configurações gerais
 frames_per_second = game_get_speed(gamespeed_fps); // Frames por segundo do jogo
@@ -7,22 +9,58 @@ tile_size = 64;       // Tamanho de cada tile da ilha (pixels)
 spawn_attempts = 20;  // Tiles sorteados em cada tentativa antes de desistir
 retry_delay = 1;      // Segundos para tentar de novo quando não há tile livre
 
-// Árvores
-tree_max = 4;          // Quantidade de árvores que a ilha mantém
-tree_interval = 20;    // Segundos para nascer uma árvore quando falta alguma
-tree_timer = tree_interval * frames_per_second; // Contador em frames
+// Quantidade e ritmo (somando todos os tipos de recurso)
+resource_max = 8;     // Máximo de recursos na ilha ao mesmo tempo
+min_interval = 3;     // Segundos até o próximo recurso com a ilha vazia
+max_interval = 25;    // Segundos até o próximo recurso com a ilha quase cheia
+spawn_timer = 0;      // Frames desde o último recurso gerado
 
-// Pedras
-rock_max = 2;          // Quantidade de pedras que a ilha mantém
-rock_interval = 30;    // Segundos para nascer uma pedra quando falta alguma
-rock_timer = rock_interval * frames_per_second; // Contador em frames
+// Tipos de recurso
+// Quanto maior a qualidade, melhor é o recurso e menor a chance de ele nascer
+resource_types = [
+    { resource_object: obj_tree, quality: 1 },
+    { resource_object: obj_rock, quality: 2 }
+];
 
-// Povoamento inicial 1 frame depois, quando todas as instâncias da sala já existem
-alarm[0] = 1;
+// Calcula a chance (%) de cada tipo, proporcional a 1 / qualidade
+var total_weight = 0;
+for (var i = 0; i < array_length(resource_types); i++) {
+    total_weight += 1 / resource_types[i].quality;
+}
+for (var i = 0; i < array_length(resource_types); i++) {
+    resource_types[i].chance = (1 / resource_types[i].quality) / total_weight * 100;
+}
+
+/// Segundos até o próximo recurso, de acordo com quantos já existem
+/// Quanto mais cheia a ilha, mais devagar nasce o próximo
+get_spawn_interval = function(_resource_count) {
+    // Proporção da ilha já ocupada (0 = vazia, 1 = cheia)
+    var fill = _resource_count / resource_max;
+
+    // Vai do menor ao maior intervalo conforme a ilha enche
+    return lerp(min_interval, max_interval, fill);
+};
+
+/// Sorteia o tipo do próximo recurso de acordo com a chance (%) de cada um
+pick_resource_object = function() {
+    var roll = random(100);
+    var accumulated = 0;
+
+    // Soma as chances até passar do número sorteado
+    for (var i = 0; i < array_length(resource_types); i++) {
+        accumulated += resource_types[i].chance;
+        if (roll < accumulated) {
+            return resource_types[i].resource_object;
+        }
+    }
+
+    // Segurança contra arredondamento: devolve o último tipo
+    return resource_types[array_length(resource_types) - 1].resource_object;
+};
 
 /// Verifica se o tile centrado em (_x, _y) ainda não tem recurso nem caixa de venda
 is_tile_free = function(_x, _y) {
-    // Verifica se já existe uma árvore ou pedra neste tile
+    // Verifica se já existe um recurso neste tile
     for (var i = 0; i < instance_number(obj_parent_breakable); i++) {
         var resource = instance_find(obj_parent_breakable, i);
         if (point_distance(_x, _y, resource.x, resource.y) < tile_size / 2) {

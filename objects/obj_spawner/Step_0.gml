@@ -1,35 +1,23 @@
-// Árvores: o contador só anda enquanto faltar alguma
-if (instance_number(obj_tree) < tree_max) {
-    tree_timer -= 1;
+// Quantos recursos existem agora (todos os tipos juntos)
+var resource_count = instance_number(obj_parent_breakable);
 
-    // Quando o contador termina, tenta fazer nascer uma árvore
-    if (tree_timer <= 0) {
-        if (spawn_resource(obj_tree)) {
-            tree_timer = tree_interval * frames_per_second;
+if (resource_count < resource_max) {
+    // Conta o tempo desde o último recurso gerado
+    spawn_timer += 1;
+
+    // O intervalo é recalculado todo frame, então acompanha o número de recursos
+    var needed_frames = get_spawn_interval(resource_count) * frames_per_second;
+
+    // Quando o tempo passa do necessário, sorteia o tipo e tenta gerar
+    if (spawn_timer >= needed_frames) {
+        if (spawn_resource(pick_resource_object())) {
+            spawn_timer = 0;
         } else {
             // Sem tile livre: tenta de novo em instantes
-            tree_timer = retry_delay * frames_per_second;
+            spawn_timer = needed_frames - retry_delay * frames_per_second;
         }
     }
 } else {
-    // Ilha completa: o contador recomeça quando faltar uma
-    tree_timer = tree_interval * frames_per_second;
-}
-
-// Pedras: o contador só anda enquanto faltar alguma
-if (instance_number(obj_rock) < rock_max) {
-    rock_timer -= 1;
-
-    // Quando o contador termina, tenta fazer nascer uma pedra
-    if (rock_timer <= 0) {
-        if (spawn_resource(obj_rock)) {
-            rock_timer = rock_interval * frames_per_second;
-        } else {
-            // Sem tile livre: tenta de novo em instantes
-            rock_timer = retry_delay * frames_per_second;
-        }
-    }
-} else {
-    // Ilha completa: o contador recomeça quando faltar uma
-    rock_timer = rock_interval * frames_per_second;
+    // Ilha cheia: o contador recomeça quando faltar um recurso
+    spawn_timer = 0;
 }
