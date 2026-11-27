@@ -102,6 +102,11 @@ for (var i = 0; i < array_length(buttons); i++) {
         draw_text_transformed(button.x - 20, button.y + button.h / 2, button.caption, 1.5, 1.5, 0);
         draw_set_halign(fa_center);
     }
+
+    // Valor entre as setas (ex.: a resolução), no meio da linha
+    if (variable_struct_exists(button, "value_text")) {
+        draw_text_transformed(button.x + row_w / 2, button.y + button.h / 2, button.value_text, 1.5, 1.5, 0);
+    }
 }
 
 // Restaura o estado do desenho

@@ -126,13 +126,21 @@ build_buttons = function() {
             }
 
             var fullscreen_button = make_button("toggle_fullscreen", video.fullscreen ? "Ligada" : "Desligada", row_x, row_y, row_w, true, "Tela cheia");
-            var scale_button = make_button("cycle_scale", size_text, row_x, row_y + row_step, row_w, !video.fullscreen, "Resolucao da janela");
+
+            // Resolução: seta para a esquerda e para a direita, com o valor atual no meio
+            var arrow_w = 60;
+            var previous_button = make_button("res_previous", "<", row_x, row_y + row_step, arrow_w, !video.fullscreen, "Resolucao da janela");
+            var next_button = make_button("res_next", ">", row_x + row_w - arrow_w, row_y + row_step, arrow_w, !video.fullscreen, "");
+            previous_button.value_text = size_text;
+            next_button.value_text = "";
             var vsync_button = make_button("toggle_vsync", video.vsync ? "Ligado" : "Desligado", row_x, row_y + row_step * 2, row_w, true, "Vsync");
             fullscreen_button.h = row_h;
-            scale_button.h = row_h;
+            previous_button.h = row_h;
+            next_button.h = row_h;
             vsync_button.h = row_h;
             array_push(list, fullscreen_button);
-            array_push(list, scale_button);
+            array_push(list, previous_button);
+            array_push(list, next_button);
             array_push(list, vsync_button);
         }
 
@@ -237,15 +245,19 @@ run_action = function(_id) {
             break;
 
 
-        case "cycle_scale":
-            // Automática -> cada resolução padrão que cabe na tela, da menor para a maior -> automática
-            var options = video_get_available_resolutions();
-            var current_index = array_get_index(options, video.window_width);  // -1 se for automática
-            if (current_index + 1 >= array_length(options)) {
-                video.window_width = 0;
-            } else {
-                video.window_width = options[current_index + 1];
+        case "res_previous":
+        case "res_next":
+            // Automática, depois cada resolução padrão que cabe na tela; as setas dão a volta nas pontas
+            var options = [0];
+            var available = video_get_available_resolutions();
+            for (var i = 0; i < array_length(available); i++) {
+                array_push(options, available[i]);
             }
+
+            var current_index = max(0, array_get_index(options, video.window_width));  // Valor desconhecido vira automática
+            var direction_step = (_id == "res_next") ? 1 : -1;
+            var new_index = (current_index + direction_step + array_length(options)) mod array_length(options);
+            video.window_width = options[new_index];
             settings_apply_video();
             settings_save();
             break;
