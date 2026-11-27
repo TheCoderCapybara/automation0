@@ -11,8 +11,8 @@ retry_delay = 1;      // Segundos para tentar de novo quando não há tile livre
 
 // Quantidade e ritmo (somando todos os tipos de recurso)
 resource_max = 8;     // Máximo de recursos na ilha ao mesmo tempo
-min_interval = 3;     // Segundos até o próximo recurso com a ilha vazia
-max_interval = 25;    // Segundos até o próximo recurso com a ilha quase cheia
+min_interval = 10;    // Segundos até o próximo recurso com a ilha vazia
+max_interval = 80;    // Segundos até o próximo recurso com a ilha cheia (a curva é linear)
 spawn_timer = 0;      // Frames desde o último recurso gerado
 
 // Tipos de recurso
