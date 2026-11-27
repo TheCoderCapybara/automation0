@@ -1,5 +1,5 @@
-// Alterna o inventário com a tecla Q
-if (keyboard_check_pressed(ord("Q"))) {
+// Alterna o inventário com a tecla configurada (padrão: Q)
+if (keyboard_check_pressed(global.settings.controls.inventory)) {
     show_inventory = !show_inventory;
 }
 

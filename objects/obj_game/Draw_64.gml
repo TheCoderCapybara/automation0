@@ -32,6 +32,22 @@ if (state == "playing") {
         draw_set_halign(fa_left);
         draw_set_alpha(1);
     }
+} else if (state == "paused") {
+    // Tela de pausa
+    draw_set_color(c_black);
+    draw_set_alpha(0.7);
+    draw_rectangle(0, 0, gui_w, gui_h, false);
+    draw_set_alpha(1);
+
+    draw_set_color(c_white);
+    draw_set_halign(fa_center);
+    draw_set_valign(fa_middle);
+    draw_text_transformed(gui_w / 2, gui_h / 2 - 60, "PAUSADO", 3, 3, 0);
+    draw_text_transformed(gui_w / 2, gui_h / 2 + 10, "Jogo salvo", 1.5, 1.5, 0);
+    draw_text_transformed(gui_w / 2, gui_h / 2 + 60, "Esc - Continuar", 1.5, 1.5, 0);
+    draw_text_transformed(gui_w / 2, gui_h / 2 + 90, "M - Menu inicial", 1.5, 1.5, 0);
+    draw_set_halign(fa_left);
+    draw_set_valign(fa_top);
 } else {
     // Tela de fim de jogo
     draw_set_color(c_black);
@@ -58,6 +74,7 @@ if (state == "playing") {
         // Escolha da seed do próximo mundo
         draw_text_transformed(cx, cy + 140, "R - Novo mundo com seed aleatoria", 1.5, 1.5, 0);
         draw_text_transformed(cx, cy + 170, "D - Digitar uma seed", 1.5, 1.5, 0);
+        draw_text_transformed(cx, cy + 200, "M - Menu inicial", 1.5, 1.5, 0);
     } else {
         // Campo de digitação, com um cursor que pisca a cada meio segundo
         var cursor = ((current_time div 500) mod 2 == 0) ? "_" : " ";

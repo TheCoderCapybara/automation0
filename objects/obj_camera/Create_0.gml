@@ -23,8 +23,7 @@ if (instance_exists(obj_target)) {
 }
 camera_set_view_pos(camera, x - view_w / 2, y - view_h / 2);
 
-// Janela e superfície em um múltiplo inteiro da resolução base que caiba na tela
-var scale = max(1, min(display_get_width() div view_w, display_get_height() div view_h));
-window_set_size(view_w * scale, view_h * scale);
-surface_resize(application_surface, view_w * scale, view_h * scale);
-window_center();
+// Carrega as configurações (só na primeira vez) e aplica o vídeo escolhido:
+// tela cheia ou janela, escala e superfície da aplicação
+settings_init();
+settings_apply_video();

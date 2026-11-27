@@ -12,7 +12,7 @@ item_prices[$ "log"] = 3;
 item_prices[$ "stone"] = 5;
 
 // --- Estado ---
-state = "playing";  // "playing" ou "game_over"
+state = "playing";  // "playing", "paused" ou "game_over"
 day = 1;
 day_length = day_length_seconds * game_get_speed(gamespeed_fps);  // Em frames
 day_timer = day_length;
@@ -28,6 +28,25 @@ notice_timer = 0;
 game_over_mode = "menu";  // "menu" (escolher) ou "typing" (digitando a seed)
 seed_input = "";          // Seed digitada pelo jogador
 seed_max_digits = 9;      // Máximo de dígitos da seed
+
+/// Pausa o jogo: salva e congela tudo (este controlador continua ativo)
+pause_game = function() {
+    save_game();
+    state = "paused";
+    instance_deactivate_all(true);
+};
+
+/// Despausa o jogo
+resume_game = function() {
+    instance_activate_all();
+    state = "playing";
+};
+
+/// Volta ao menu inicial (o jogo já foi salvo ao pausar, ou apagado ao morrer)
+go_to_menu = function() {
+    instance_activate_all();
+    room_goto(rm_menu);
+};
 
 /// Imposto cobrado no fim do dia informado
 get_tax = function(_day) {
@@ -69,6 +88,7 @@ sell_inventory = function() {
 /// Começa um novo mundo com a seed informada: a ilha é gerada de novo ao reiniciar a sala
 start_new_world = function(_seed) {
     global.world_seed = _seed;
+    global.continue_game = false;
     room_restart();
 };
 
@@ -81,8 +101,10 @@ end_day = function() {
         show_notice("Dia " + string(day) + " completo - imposto pago: " + string(tax));
         day += 1;
         day_timer = day_length;
+        save_game();  // Salva automaticamente no começo de cada dia
     } else {
         state = "game_over";
+        save_delete();  // Quem morre não pode continuar aquele jogo
         failed_tax = tax;
         days_survived = day - 1;
         instance_deactivate_all(true);  // Congela o jogo (este controlador continua ativo)

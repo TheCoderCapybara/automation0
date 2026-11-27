@@ -6,6 +6,11 @@ if (state == "game_over") {
             start_new_world(irandom_range(1, 999999999));
         }
 
+        // M: volta ao menu inicial
+        if (keyboard_check_pressed(ord("M"))) {
+            go_to_menu();
+        }
+
         // D: o jogador digita a seed
         if (keyboard_check_pressed(ord("D"))) {
             game_over_mode = "typing";
@@ -27,6 +32,23 @@ if (state == "game_over") {
             game_over_mode = "menu";
         }
     }
+    exit;
+}
+
+// Jogo pausado: Esc continua, M volta ao menu (o jogo já foi salvo ao pausar)
+if (state == "paused") {
+    if (keyboard_check_pressed(vk_escape)) {
+        resume_game();
+    }
+    if (keyboard_check_pressed(ord("M"))) {
+        go_to_menu();
+    }
+    exit;
+}
+
+// Esc: pausa e salva
+if (keyboard_check_pressed(vk_escape)) {
+    pause_game();
     exit;
 }
 
