@@ -1,6 +1,14 @@
-// Posição do mouse na interface
-var mouse_gui_x = device_mouse_x_to_gui(0);
-var mouse_gui_y = device_mouse_y_to_gui(0);
+// A área 1280x720 do menu fica centralizada na interface; o mouse é medido dentro dela
+var ui_x = (display_get_gui_width() - gui_w) / 2;
+var ui_y = (display_get_gui_height() - gui_h) / 2;
+var mouse_gui_x = device_mouse_x_to_gui(0) - ui_x;
+var mouse_gui_y = device_mouse_y_to_gui(0) - ui_y;
+
+// Lista de resoluções aberta: a roda do mouse rola a lista
+if (dropdown_open) {
+    var scroll_max = max(0, array_length(get_resolution_options()) - dropdown_visible);
+    dropdown_scroll = clamp(dropdown_scroll + mouse_wheel_down() - mouse_wheel_up(), 0, scroll_max);
+}
 
 // Botão temporário de voltar à resolução padrão
 if (revert_timer > 0) {

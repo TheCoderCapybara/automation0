@@ -4,13 +4,18 @@ var cx = gui_w / 2;
 draw_set_halign(fa_center);
 draw_set_valign(fa_middle);
 
-// Na pausa, escurece o fundo
+// Na pausa, escurece o fundo inteiro
 if (in_game) {
     draw_set_color(c_black);
     draw_set_alpha(0.7);
-    draw_rectangle(0, 0, gui_w, gui_h, false);
+    draw_rectangle(0, 0, display_get_gui_width(), display_get_gui_height(), false);
     draw_set_alpha(1);
 }
+
+// A área 1280x720 do menu fica centralizada na interface (qualquer proporção de tela)
+var ui_x = (display_get_gui_width() - gui_w) / 2;
+var ui_y = (display_get_gui_height() - gui_h) / 2;
+matrix_set(matrix_world, matrix_build(ui_x, ui_y, 0, 0, 0, 0, 1, 1, 1));
 
 // Título do jogo (fica escondido nas configurações)
 draw_set_color(c_white);
@@ -112,6 +117,14 @@ for (var i = 0; i < array_length(buttons); i++) {
         draw_set_halign(fa_center);
     }
 
+    // Setas pequenas nas pontas da lista de resoluções quando há mais itens para rolar
+    if (variable_struct_exists(button, "more_above") && button.more_above) {
+        draw_triangle(button.x + button.w - 32, button.y + 24, button.x + button.w - 16, button.y + 24, button.x + button.w - 24, button.y + 14, false);
+    }
+    if (variable_struct_exists(button, "more_below") && button.more_below) {
+        draw_triangle(button.x + button.w - 32, button.y + 16, button.x + button.w - 16, button.y + 16, button.x + button.w - 24, button.y + 26, false);
+    }
+
     // Setinha à direita da caixa de resolução (aponta para cima com a lista aberta)
     if (variable_struct_exists(button, "has_arrow")) {
         var arrow_x = button.x + button.w - 24;
@@ -135,6 +148,7 @@ if (revert_timer > 0) {
 }
 
 // Restaura o estado do desenho
+matrix_set(matrix_world, matrix_build_identity());
 draw_set_alpha(1);
 draw_set_color(c_white);
 draw_set_halign(fa_left);

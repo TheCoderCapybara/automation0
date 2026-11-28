@@ -1,3 +1,6 @@
+// A resolução pode ter mudado: reposiciona o inventário
+update_layout();
+
 // Alterna o inventário com a tecla configurada (padrão: Q)
 if (keyboard_check_pressed(global.settings.controls.inventory)) {
     show_inventory = !show_inventory;

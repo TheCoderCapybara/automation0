@@ -10,10 +10,10 @@ if (!variable_instance_exists(id, "in_game")) {
 // Carrega as configurações (só na primeira vez) e aplica o vídeo e o som escolhidos
 settings_init();
 
-// A interface é desenhada em 1280x720 e a tela estica para qualquer janela
+// O menu é montado numa área de 1280x720 que fica centralizada na interface,
+// seja qual for a proporção da tela (ver ui_x e ui_y no Step e no Draw)
 gui_w = BASE_WIDTH;
 gui_h = BASE_HEIGHT;
-display_set_gui_size(gui_w, gui_h);
 
 // --- Título (o nome do jogo ainda vai mudar) ---
 title_text = in_game ? "Pausado" : "Automation";
@@ -28,7 +28,7 @@ first_button_y = 300;  // Y do botão mais acima do menu principal
 // --- Linhas da tela de configurações (legenda à esquerda e controle à direita) ---
 row_x = gui_w / 2 + 20;
 row_y = 215;
-row_w = 260;
+row_w = 300;
 row_h = 40;
 row_step = 48;
 
@@ -54,6 +54,8 @@ waiting_key = "";        // Ação que espera uma tecla nova (vazio = nenhuma)
 buttons = [];            // Botões da tela atual (refeitos todo frame)
 hover_index = -1;        // Botão sob o mouse (-1 = nenhum)
 dropdown_open = false;   // Lista de resoluções aberta
+dropdown_scroll = 0;     // Primeira resolução visível da lista
+dropdown_visible = 8;    // Quantas resoluções cabem na lista de uma vez
 input_delay = 2;         // Frames sem aceitar Esc (o Esc que pausou o jogo não pode já despausar)
 
 // --- Último jogo salvo ---
@@ -79,22 +81,14 @@ make_button = function(_id, _label, _x, _y, _w, _enabled, _caption) {
     return { id: _id, label: _label, x: _x, y: _y, w: _w, h: button_h, enabled: _enabled, caption: _caption };
 };
 
-/// Resoluções que o jogador pode escolher: 0 (automática) e as padrões 16:9 que cabem na tela
+/// Resoluções que o jogador pode escolher: { w: 0, h: 0 } (automática) e as da lista que cabem na tela
 get_resolution_options = function() {
-    var options = [0];
+    var options = [{ w: 0, h: 0 }];
     var available = video_get_available_resolutions();
     for (var i = 0; i < array_length(available); i++) {
         array_push(options, available[i]);
     }
     return options;
-};
-
-/// Texto de uma resolução (0 = automática)
-get_resolution_text = function(_width) {
-    if (_width == 0) {
-        return "Automatica";
-    }
-    return string(_width) + " x " + string(_width * 9 / 16);
 };
 
 /// Monta a lista de botões da tela atual
@@ -163,7 +157,7 @@ build_buttons = function() {
             var fullscreen_button = make_button("toggle_fullscreen", video.fullscreen ? "Ligada" : "Desligada", row_x, row_y, row_w, true, "Tela cheia");
 
             // Resolução da janela: caixa com a resolução escolhida e uma setinha que abre a lista
-            var resolution_button = make_button("res_toggle", get_resolution_text(video.window_width), row_x, row_y + row_step, row_w, !video.fullscreen, "Resolucao da janela");
+            var resolution_button = make_button("res_toggle", video_get_resolution_text(video.window_width, video.window_height), row_x, row_y + row_step, row_w, !video.fullscreen, "Resolucao da janela");
             resolution_button.has_arrow = true;
 
             var vsync_button = make_button("toggle_vsync", video.vsync ? "Ligado" : "Desligado", row_x, row_y + row_step * 2, row_w, true, "Vsync");
@@ -177,11 +171,17 @@ build_buttons = function() {
             // Lista de resoluções aberta: entra por último, para ficar por cima dos botões de baixo
             if (dropdown_open) {
                 var options = get_resolution_options();
-                for (var i = 0; i < array_length(options); i++) {
-                    var option_y = row_y + row_step + row_h + 2 + row_h * i;
-                    var option_button = make_button("res_option_" + string(options[i]), get_resolution_text(options[i]), row_x, option_y, row_w, true, "");
+                var last_visible = min(dropdown_scroll + dropdown_visible, array_length(options));
+                for (var i = dropdown_scroll; i < last_visible; i++) {
+                    var option = options[i];
+                    var option_y = row_y + row_step + row_h + 2 + row_h * (i - dropdown_scroll);
+                    var option_id = "res_option_" + string(option.w) + "x" + string(option.h);
+                    var option_button = make_button(option_id, video_get_resolution_text(option.w, option.h), row_x, option_y, row_w, true, "");
                     option_button.h = row_h;
-                    option_button.selected = (options[i] == video.window_width);
+                    option_button.selected = (option.w == video.window_width && option.h == video.window_height);
+                    // Indica que há mais resoluções acima ou abaixo (a roda do mouse rola a lista)
+                    option_button.more_above = (i == dropdown_scroll && dropdown_scroll > 0);
+                    option_button.more_below = (i == last_visible - 1 && last_visible < array_length(options));
                     array_push(list, option_button);
                 }
             }
@@ -205,14 +205,18 @@ run_action = function(_id) {
         return;
     }
 
-    // Itens da lista de resoluções: "res_option_<largura>" (0 = automática)
+    // Itens da lista de resoluções: "res_option_<largura>x<altura>" (0x0 = automática)
     if (string_pos("res_option_", _id) == 1) {
-        var chosen_width = real(string_delete(_id, 1, 11));
+        var size_text = string_delete(_id, 1, 11);
+        var separator = string_pos("x", size_text);
+        var chosen_width = real(string_copy(size_text, 1, separator - 1));
+        var chosen_height = real(string_delete(size_text, 1, separator));
         dropdown_open = false;
 
         // Só aplica (e oferece voltar ao padrão) se a resolução mudou
-        if (chosen_width != video.window_width) {
+        if (chosen_width != video.window_width || chosen_height != video.window_height) {
             video.window_width = chosen_width;
+            video.window_height = chosen_height;
             settings_apply_video();
             settings_save();
             revert_timer = revert_duration;
@@ -317,13 +321,24 @@ run_action = function(_id) {
             break;
 
         case "res_toggle":
-            // Abre ou fecha a lista de resoluções
+            // Abre ou fecha a lista de resoluções (aberta já rolada até a resolução atual)
             dropdown_open = !dropdown_open;
+            if (dropdown_open) {
+                var options = get_resolution_options();
+                var current_index = 0;
+                for (var i = 0; i < array_length(options); i++) {
+                    if (options[i].w == video.window_width && options[i].h == video.window_height) {
+                        current_index = i;
+                    }
+                }
+                dropdown_scroll = clamp(current_index - 3, 0, max(0, array_length(options) - dropdown_visible));
+            }
             break;
 
         case "revert_resolution":
             // Volta à resolução padrão (automática)
             video.window_width = 0;
+            video.window_height = 0;
             settings_apply_video();
             settings_save();
             revert_timer = 0;

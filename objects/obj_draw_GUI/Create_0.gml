@@ -14,23 +14,26 @@ item_sprites = {};
 item_sprites[$ "log"] = spr_log;
 item_sprites[$ "stone"] = spr_stone;
 
-// A GUI tem tamanho fixo, independente da escala da janela
-gui_w = 1280;
-gui_h = 720;
-display_set_gui_size(gui_w, gui_h);
-
-// Painel do inventário centralizado na GUI
+// A GUI acompanha o tamanho do jogo na tela (definido em settings_apply_video)
+// Painel do inventário centralizado na GUI e grade de slots, com a margem do painel
 panel_w = sprite_get_width(spr_back_inventory);
 panel_h = sprite_get_height(spr_back_inventory);
-panel_x = (gui_w - panel_w) / 2;
-panel_y = (gui_h - panel_h) / 2;
-
-// Grade de slots, com a margem do painel
-inventory_x = panel_x + 8;
-inventory_y = panel_y + 16;
-
-// Botão de fechar, no canto superior direito do painel
 close_w = sprite_get_width(spr_close_button);
 close_h = sprite_get_height(spr_close_button);
-close_x = panel_x + panel_w - close_w - 4;
-close_y = panel_y + 4;
+
+/// Posiciona o painel, os slots e o botão de fechar no centro da GUI atual
+update_layout = function() {
+    gui_w = display_get_gui_width();
+    gui_h = display_get_gui_height();
+
+    panel_x = (gui_w - panel_w) / 2;
+    panel_y = (gui_h - panel_h) / 2;
+
+    inventory_x = panel_x + 8;
+    inventory_y = panel_y + 16;
+
+    // Botão de fechar, no canto superior direito do painel
+    close_x = panel_x + panel_w - close_w - 4;
+    close_y = panel_y + 4;
+};
+update_layout();

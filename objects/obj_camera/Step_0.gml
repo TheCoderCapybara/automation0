@@ -1,3 +1,12 @@
+// A resolução mudou (nas configurações): ajusta a visão à nova proporção
+if (view_w != global.view_w || view_h != global.view_h) {
+    view_w = global.view_w;
+    view_h = global.view_h;
+    camera_set_view_size(camera, view_w, view_h);
+    view_wport[0] = global.screen_w;
+    view_hport[0] = global.screen_h;
+}
+
 if (!instance_exists(obj_target)) exit;
 
 // Segue o alvo suavemente
