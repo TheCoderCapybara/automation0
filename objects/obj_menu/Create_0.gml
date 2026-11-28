@@ -82,7 +82,7 @@ make_button = function(_id, _label, _x, _y, _w, _enabled, _caption) {
     return { id: _id, label: _label, x: _x, y: _y, w: _w, h: button_h, enabled: _enabled, caption: _caption };
 };
 
-/
+/// Resoluções que o jogador pode escolher: { w: 0, h: 0 } (automática) e todas as da lista
 get_resolution_options = function() {
     var options = [{ w: 0, h: 0 }];
     var available = video_get_available_resolutions();
