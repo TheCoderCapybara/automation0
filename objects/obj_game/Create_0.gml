@@ -3,7 +3,7 @@
 // --- Valores ajustáveis (placeholders de balanceamento) ---
 day_length_seconds = 120;  // Duração de cada dia, em segundos
 tax_base = 20;             // Imposto cobrado no fim do dia 1
-tax_growth = 1.2;          // Multiplicador do imposto a cada dia (1.2 = +20%)
+tax_growth = 1.5;          // Multiplicador do imposto a cada dia (1.5 = +50%)
 starting_money = 0;
 
 // Preço de venda de cada tipo de item
@@ -51,7 +51,19 @@ go_to_menu = function() {
 
 /// Imposto cobrado no fim do dia informado
 get_tax = function(_day) {
-    return round(tax_base * power(tax_growth, _day - 1));
+    var raw_tax = tax_base * power(tax_growth, _day - 1);
+
+    // Arredonda pelo último dígito: de 0 a 5 (exclusive) vai para 5; de 5 a 10 (exclusive) vai para a dezena de cima
+    var units = raw_tax mod 10;
+    var tens = raw_tax - units;
+
+    if (units == 0 || units == 5) {
+        return raw_tax;
+    }
+    if (units < 5) {
+        return tens + 5;
+    }
+    return tens + 10;
 };
 
 /// Mostra um aviso por 3 segundos
