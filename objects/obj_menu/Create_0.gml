@@ -55,7 +55,8 @@ buttons = [];            // Botões da tela atual (refeitos todo frame)
 hover_index = -1;        // Botão sob o mouse (-1 = nenhum)
 dropdown_open = false;   // Lista de resoluções aberta
 dropdown_scroll = 0;     // Primeira resolução visível da lista
-dropdown_visible = 8;    // Quantas resoluções cabem na lista de uma vez
+dropdown_visible = 10;   // Quantas resoluções cabem na lista de uma vez
+dropdown_row_h = 32;     // Altura de cada resolução na lista
 input_delay = 2;         // Frames sem aceitar Esc (o Esc que pausou o jogo não pode já despausar)
 
 // --- Último jogo salvo ---
@@ -81,7 +82,7 @@ make_button = function(_id, _label, _x, _y, _w, _enabled, _caption) {
     return { id: _id, label: _label, x: _x, y: _y, w: _w, h: button_h, enabled: _enabled, caption: _caption };
 };
 
-/// Resoluções que o jogador pode escolher: { w: 0, h: 0 } (automática) e as da lista que cabem na tela
+/
 get_resolution_options = function() {
     var options = [{ w: 0, h: 0 }];
     var available = video_get_available_resolutions();
@@ -174,10 +175,10 @@ build_buttons = function() {
                 var last_visible = min(dropdown_scroll + dropdown_visible, array_length(options));
                 for (var i = dropdown_scroll; i < last_visible; i++) {
                     var option = options[i];
-                    var option_y = row_y + row_step + row_h + 2 + row_h * (i - dropdown_scroll);
+                    var option_y = row_y + row_step + row_h + 2 + dropdown_row_h * (i - dropdown_scroll);
                     var option_id = "res_option_" + string(option.w) + "x" + string(option.h);
                     var option_button = make_button(option_id, video_get_resolution_text(option.w, option.h), row_x, option_y, row_w, true, "");
-                    option_button.h = row_h;
+                    option_button.h = dropdown_row_h;
                     option_button.selected = (option.w == video.window_width && option.h == video.window_height);
                     // Indica que há mais resoluções acima ou abaixo (a roda do mouse rola a lista)
                     option_button.more_above = (i == dropdown_scroll && dropdown_scroll > 0);

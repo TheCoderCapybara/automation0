@@ -153,21 +153,10 @@ function video_resolution_fits(_width, _height) {
     return (_width <= display_get_width() && _height <= display_get_height() - 80);
 }
 
-/// @desc Resoluções de janela que o jogador pode escolher: as da lista que cabem na tela (sempre há pelo menos uma).
+/// @desc Resoluções de janela que o jogador pode escolher: todas as da lista.
+/// Uma maior que a tela é desenhada nessa resolução e reduzida para caber na janela.
 function video_get_available_resolutions() {
-    var resolutions = video_get_resolutions();
-    var available = [];
-    for (var i = 0; i < array_length(resolutions); i++) {
-        if (video_resolution_fits(resolutions[i].w, resolutions[i].h)) {
-            array_push(available, resolutions[i]);
-        }
-    }
-
-    // Em telas muito pequenas, ainda oferece a menor
-    if (array_length(available) == 0) {
-        array_push(available, resolutions[0]);
-    }
-    return available;
+    return video_get_resolutions();
 }
 
 /// @desc Texto de uma resolução, com a proporção (0 x 0 = automática).
@@ -205,10 +194,10 @@ function video_get_size(_fullscreen) {
         }
     }
 
-    // Automática: a maior resolução 16:9 que cabe
+    // Automática: a maior resolução 16:9 que cabe na tela
     var auto_size = available[0];
     for (var i = 0; i < array_length(available); i++) {
-        if (available[i].ratio == "16:9") {
+        if (available[i].ratio == "16:9" && video_resolution_fits(available[i].w, available[i].h)) {
             auto_size = available[i];
         }
     }
@@ -241,9 +230,11 @@ function settings_apply_video() {
     global.screen_w = size.w;
     global.screen_h = size.h;
 
-    // Em janela, ajusta o tamanho e centraliza (em tela cheia o sistema cuida da janela)
+    // Em janela, ajusta o tamanho e centraliza (em tela cheia o sistema cuida da janela).
+    // Uma resolução maior que a tela é reduzida, mantendo a proporção, para a janela caber
     if (!video.fullscreen) {
-        window_set_size(size.w, size.h);
+        var fit = min(1, display_get_width() / size.w, (display_get_height() - 80) / size.h);
+        window_set_size(max(1, round(size.w * fit)), max(1, round(size.h * fit)));
         window_center();
     }
 
