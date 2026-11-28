@@ -122,6 +122,55 @@ generate_island = function(_seed) {
         }
     }
 
+    // Tiles que nunca são removidos: o centro (onde o jogador começa) e os da caixa de venda
+    var protected_tiles = [[bound, bound]];
+    for (var i = 0; i < instance_number(obj_sell_box); i++) {
+        var sell_box = instance_find(obj_sell_box, i);
+        array_push(protected_tiles, [floor(sell_box.x / tile_size) - center_tile_x + bound, floor(sell_box.y / tile_size) - center_tile_y + bound]);
+    }
+
+    // Remove os bloquinhos: tiles com só 1 vizinho de terra (pontinhas para fora da ilha).
+    // Repete até não sobrar nenhum, porque tirar uma pontinha pode deixar a próxima assim
+    var removed_any = true;
+    while (removed_any) {
+        removed_any = false;
+
+        for (var ix = 0; ix < size; ix++) {
+            for (var iy = 0; iy < size; iy++) {
+                if (!connected[ix][iy]) {
+                    continue;
+                }
+
+                // Pula os tiles protegidos
+                var is_protected = false;
+                for (var i = 0; i < array_length(protected_tiles); i++) {
+                    if (protected_tiles[i][0] == ix && protected_tiles[i][1] == iy) {
+                        is_protected = true;
+                    }
+                }
+                if (is_protected) {
+                    continue;
+                }
+
+                // Conta os vizinhos de terra (4 lados)
+                var neighbor_count = 0;
+                for (var d = 0; d < 4; d++) {
+                    var near_x = ix + directions[d][0];
+                    var near_y = iy + directions[d][1];
+                    if (near_x >= 0 && near_x < size && near_y >= 0 && near_y < size && connected[near_x][near_y]) {
+                        neighbor_count += 1;
+                    }
+                }
+
+                // Só 1 vizinho (ou nenhum): é um bloquinho
+                if (neighbor_count <= 1) {
+                    connected[ix][iy] = false;
+                    removed_any = true;
+                }
+            }
+        }
+    }
+
     // Cria um tile de grama para cada tile de terra ligado ao centro
     island_tile_count = 0;
     for (var ix = 0; ix < size; ix++) {

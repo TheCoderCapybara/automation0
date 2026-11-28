@@ -1,7 +1,7 @@
 // Controlador do jogo: dia, dinheiro, imposto e fim de jogo.
 
 // --- Valores ajustáveis (placeholders de balanceamento) ---
-day_length_seconds = 60;   // Duração de cada dia, em segundos
+day_length_seconds = 120;  // Duração de cada dia, em segundos
 tax_base = 20;             // Imposto cobrado no fim do dia 1
 tax_growth = 1.2;          // Multiplicador do imposto a cada dia (1.2 = +20%)
 starting_money = 0;
