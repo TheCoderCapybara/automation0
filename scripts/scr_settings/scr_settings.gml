@@ -174,12 +174,6 @@ function video_get_screen_size() {
     return { w: rects[best_index + 6] - rects[best_index + 4], h: rects[best_index + 7] - rects[best_index + 5] };
 }
 
-/// @desc Diz se uma janela desse tamanho cabe na tela (com folga para a barra de título e a barra de tarefas).
-function video_resolution_fits(_width, _height) {
-    var screen = video_get_screen_size();
-    return (_width <= screen.w && _height <= screen.h - 80);
-}
-
 /// @desc Resoluções de janela que o jogador pode escolher: todas as da lista.
 /// Uma maior que a tela é desenhada nessa resolução e reduzida para caber na janela.
 function video_get_available_resolutions() {
@@ -202,7 +196,7 @@ function video_get_resolution_text(_width, _height) {
 }
 
 /// @desc Tamanho do jogo na tela.
-/// Tela cheia: a tela inteira. Janela: a resolução escolhida (automática = a maior 16:9 que cabe na tela).
+/// Tela cheia: a tela inteira. Janela: a resolução escolhida (automática = a maior 16:9 que cabe no monitor).
 /// @param {Bool} _fullscreen Se está em tela cheia
 /// @returns {Struct} { w, h }
 function video_get_size(_fullscreen) {
@@ -221,14 +215,10 @@ function video_get_size(_fullscreen) {
         }
     }
 
-    // Automática: a maior resolução 16:9 que cabe na tela
-    var auto_size = available[0];
-    for (var i = 0; i < array_length(available); i++) {
-        if (available[i].ratio == "16:9" && video_resolution_fits(available[i].w, available[i].h)) {
-            auto_size = available[i];
-        }
-    }
-    return { w: auto_size.w, h: auto_size.h };
+    // Automática: a maior janela 16:9 que cabe no monitor (com folga para a barra de título e a de tarefas)
+    var screen = video_get_screen_size();
+    var fit = min(screen.w / BASE_WIDTH, (screen.h - 80) / BASE_HEIGHT);
+    return { w: floor(BASE_WIDTH * fit), h: floor(BASE_HEIGHT * fit) };
 }
 
 /// @desc Tamanho da visão do jogo (em pixels do mundo) para uma tela com a proporção dada.
