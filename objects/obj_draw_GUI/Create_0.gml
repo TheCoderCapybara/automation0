@@ -16,8 +16,8 @@ item_sprites[$ "stone"] = spr_stone;
 
 // Espaço de venda (da caixa de venda): 1 slot ao lado do inventário. O que é solto nele é vendido
 sell_open = false;
-sell_panel_w = 96;
-sell_panel_h = 100;
+sell_panel_w = sprite_get_width(spr_back_venda);
+sell_panel_h = sprite_get_height(spr_back_venda);
 
 // Pilha na mão: { type, qty }, ou undefined se não segura nada.
 // Clicar numa pilha pega ela inteira (esquerdo) ou metade (direito); clicar de novo solta

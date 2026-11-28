@@ -75,6 +75,7 @@
     {"id":{"name":"scr_settings","path":"scripts/scr_settings/scr_settings.yy",},},
     {"id":{"name":"spr_arvore","path":"sprites/spr_arvore/spr_arvore.yy",},},
     {"id":{"name":"spr_back_inventory","path":"sprites/spr_back_inventory/spr_back_inventory.yy",},},
+    {"id":{"name":"spr_back_venda","path":"sprites/spr_back_venda/spr_back_venda.yy",},},
     {"id":{"name":"spr_chao_grama","path":"sprites/spr_chao_grama/spr_chao_grama.yy",},},
     {"id":{"name":"spr_chao_jangada","path":"sprites/spr_chao_jangada/spr_chao_jangada.yy",},},
     {"id":{"name":"spr_close_button","path":"sprites/spr_close_button/spr_close_button.yy",},},
