@@ -3,6 +3,20 @@ if (!show_inventory) exit;
 draw_sprite(spr_back_inventory, 0, panel_x, panel_y);
 draw_sprite(spr_close_button, 0, close_x, close_y);
 
+// Espaço de venda: painel à direita com 1 slot
+if (sell_open) {
+    draw_set_color(make_color_rgb(35, 60, 90));
+    draw_rectangle(sell_panel_x, sell_panel_y, sell_panel_x + sell_panel_w, sell_panel_y + sell_panel_h, false);
+    draw_set_color(c_white);
+    draw_rectangle(sell_panel_x, sell_panel_y, sell_panel_x + sell_panel_w, sell_panel_y + sell_panel_h, true);
+
+    draw_set_halign(fa_center);
+    draw_set_valign(fa_middle);
+    draw_text(sell_panel_x + sell_panel_w / 2, sell_panel_y + 20, "VENDA");
+    draw_sprite(spr_inventory, 0, sell_slot_x, sell_slot_y);
+    draw_text(sell_panel_x + sell_panel_w / 2, sell_panel_y + 88, "Solte aqui");
+}
+
 // Quantidades alinhadas ao canto inferior direito do slot
 draw_set_halign(fa_right);
 draw_set_valign(fa_bottom);

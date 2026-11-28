@@ -14,6 +14,11 @@ item_sprites = {};
 item_sprites[$ "log"] = spr_log;
 item_sprites[$ "stone"] = spr_stone;
 
+// Espaço de venda (da caixa de venda): 1 slot ao lado do inventário. O que é solto nele é vendido
+sell_open = false;
+sell_panel_w = 96;
+sell_panel_h = 100;
+
 // Pilha na mão: { type, qty }, ou undefined se não segura nada.
 // Clicar numa pilha pega ela inteira (esquerdo) ou metade (direito); clicar de novo solta
 held = undefined;
@@ -37,6 +42,12 @@ update_layout = function() {
 
     inventory_x = panel_x + 8;
     inventory_y = panel_y + 16;
+
+    // Espaço de venda: à direita do painel do inventário, com o slot no meio
+    sell_panel_x = panel_x + panel_w + 16;
+    sell_panel_y = panel_y;
+    sell_slot_x = sell_panel_x + (sell_panel_w - slot_size) / 2;
+    sell_slot_y = sell_panel_y + 48;
 
     // Botão de fechar, no canto superior direito do painel
     close_x = panel_x + panel_w - close_w - 4;
@@ -96,5 +107,26 @@ return_held = function() {
     }
     if (held != undefined && held.qty <= 0) {
         held = undefined;
+    }
+};
+
+/// Diz se a posição da GUI está sobre o slot de venda (só com o espaço de venda aberto)
+is_over_sell_slot = function(_x, _y) {
+    return sell_open && point_in_rectangle(_x, _y, sell_slot_x, sell_slot_y, sell_slot_x + slot_size - 1, sell_slot_y + slot_size - 1);
+};
+
+/// Vende itens da pilha da mão (preço definido no obj_game); só tira da mão o que foi vendido
+sell_held = function(_amount) {
+    if (held == undefined) return;
+
+    var game = instance_find(obj_game, 0);
+    if (game == noone) return;
+
+    var sold_qty = min(_amount, held.qty);
+    if (game.sell_item(held.type, sold_qty) > 0) {
+        held.qty -= sold_qty;
+        if (held.qty <= 0) {
+            held = undefined;
+        }
     }
 };

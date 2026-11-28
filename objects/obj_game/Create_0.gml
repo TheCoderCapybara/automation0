@@ -60,29 +60,19 @@ show_notice = function(_text) {
     notice_timer = 3 * game_get_speed(gamespeed_fps);
 };
 
-/// Vende tudo o que o inventário tem e tem preço. Retorna o total ganho.
-sell_inventory = function() {
-    var gui = instance_find(obj_draw_GUI, 0);
-    if (gui == noone) return 0;
+/// Vende uma quantidade de um tipo de item (arrastado para o espaço da caixa de venda). Retorna o total ganho.
+sell_item = function(_type, _qty) {
+    var price = item_prices[$ _type];
 
-    var total = 0;
-    for (var i = 0; i < array_length(gui.inventory); i++) {
-        var slot = gui.inventory[i];
-        if (slot == undefined) continue;
-
-        var price = item_prices[$ slot.type];
-        if (price == undefined) continue;  // Item sem preço não é vendido
-
-        total += price * slot.qty;
-        gui.inventory[i] = undefined;
+    // Item sem preço não é vendido
+    if (price == undefined) {
+        show_notice("Esse item nao pode ser vendido");
+        return 0;
     }
 
-    if (total > 0) {
-        money += total;
-        show_notice("Vendido: +" + string(total) + " moedas");
-    } else {
-        show_notice("Nada para vender");
-    }
+    var total = price * _qty;
+    money += total;
+    show_notice("Vendido: +" + string(total) + " moedas");
     return total;
 };
 

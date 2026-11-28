@@ -6,8 +6,9 @@ if (keyboard_check_pressed(global.settings.controls.inventory)) {
     show_inventory = !show_inventory;
 }
 
-// Fechar o inventário devolve o que está na mão
+// Fechar o inventário devolve o que está na mão e fecha o espaço de venda
 if (!show_inventory) {
+    sell_open = false;
     left_pick = false;
     return_held();
 }
@@ -23,7 +24,10 @@ if (show_inventory && mouse_check_button_pressed(mb_left)) {
     } else {
         var clicked_slot = get_slot_at(mx, my);
 
-        if (clicked_slot != -1) {
+        if (is_over_sell_slot(mx, my)) {
+            // Clicar no espaço de venda com itens na mão vende a pilha toda
+            sell_held(held == undefined ? 0 : held.qty);
+        } else if (clicked_slot != -1) {
             if (held == undefined) {
                 // Pega a pilha inteira (segurar e arrastar também funciona: ver abaixo)
                 if (inventory[clicked_slot] != undefined) {
@@ -46,7 +50,10 @@ if (left_pick && !mouse_check_button(mb_left)) {
     if (held != undefined) {
         var release_slot = get_slot_at(mx, my);
 
-        if (release_slot == held_from) {
+        if (is_over_sell_slot(mx, my)) {
+            // Arrastou até o espaço de venda: vende a pilha toda
+            sell_held(held.qty);
+        } else if (release_slot == held_from) {
             // Foi só um clique: continua com a pilha na mão
         } else if (release_slot != -1) {
             place_held_at(release_slot);
@@ -61,7 +68,10 @@ if (left_pick && !mouse_check_button(mb_left)) {
 if (show_inventory && mouse_check_button_pressed(mb_right)) {
     var right_slot = get_slot_at(mx, my);
 
-    if (right_slot != -1) {
+    if (is_over_sell_slot(mx, my)) {
+        // No espaço de venda, o botão direito vende 1 item da mão
+        sell_held(1);
+    } else if (right_slot != -1) {
         var right_item = inventory[right_slot];
 
         if (held == undefined) {

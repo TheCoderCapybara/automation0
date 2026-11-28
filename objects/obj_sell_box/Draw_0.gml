@@ -9,7 +9,7 @@ draw_set_halign(fa_center);
 draw_set_valign(fa_bottom);
 draw_text(x, y - 28, "VENDA");
 if (player_near) {
-    draw_text(x, y - 46, "[" + key_get_name(global.settings.controls.interact) + "] Vender tudo");
+    draw_text(x, y - 46, "[" + key_get_name(global.settings.controls.interact) + "] Vender");
 }
 draw_set_halign(fa_left);
 draw_set_valign(fa_top);
