@@ -3,7 +3,7 @@ show_inventory = false;  // Visibilidade do inventário
 slot_size = 32;          // Cada slot tem 32x32 pixels
 inventory_cols = 10;
 inventory_rows = 8;
-pack_size = 99;          // Máximo de itens por slot
+pack_size = 50;          // Máximo de itens por slot
 
 // Slots em ordem de leitura (esquerda para direita, cima para baixo).
 // undefined = vazio; ocupado = { type: "log", qty: 3 }
