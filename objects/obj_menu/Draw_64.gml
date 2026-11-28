@@ -33,7 +33,12 @@ if (screen == "settings") {
 
 // Tela de saída: pergunta de confirmação
 if (screen == "quit") {
-    draw_text_transformed(cx, 320, "Tem certeza que deseja sair do jogo?", 2, 2, 0);
+    if (in_game) {
+        draw_text_transformed(cx, 320, "Tem certeza que deseja sair para o menu?", 2, 2, 0);
+        draw_text(cx, 365, "O jogo ja esta salvo");
+    } else {
+        draw_text_transformed(cx, 320, "Tem certeza que deseja sair do jogo?", 2, 2, 0);
+    }
 }
 
 // Tela de novo jogo: campo da seed

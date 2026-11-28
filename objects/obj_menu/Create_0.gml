@@ -103,7 +103,7 @@ build_buttons = function() {
         // Pausa, de cima para baixo: voltar ao jogo, configurações, sair
         array_push(list, make_button("resume", "Voltar ao jogo", left, first_button_y, button_w, true, ""));
         array_push(list, make_button("settings", "Configuracoes", left, first_button_y + step, button_w, true, ""));
-        array_push(list, make_button("quit", "Sair do jogo", left, first_button_y + step * 2, button_w, true, ""));
+        array_push(list, make_button("quit", "Sair para o menu", left, first_button_y + step * 2, button_w, true, ""));
     }
 
     if (screen == "main" && !in_game) {
@@ -245,7 +245,14 @@ run_action = function(_id) {
             break;
 
         case "quit_yes":
-            game_end();
+            if (in_game) {
+                // Na partida: volta ao menu inicial (o jogo já foi salvo ao pausar)
+                with (obj_game) {
+                    go_to_menu();
+                }
+            } else {
+                game_end();
+            }
             break;
 
         case "quit_no":
