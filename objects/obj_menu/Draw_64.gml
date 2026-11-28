@@ -54,7 +54,7 @@ if (screen == "new_game") {
     // Aviso: o novo jogo substitui o save anterior
     if (has_save) {
         draw_set_color(c_yellow);
-        draw_text(cx, 560, "Atencao: comecar um novo jogo substitui o jogo salvo");
+        draw_text(cx, 280, "Atencao: comecar um novo jogo substitui o jogo salvo");
         draw_set_color(c_white);
     }
 }
