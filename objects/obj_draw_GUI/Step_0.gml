@@ -29,12 +29,17 @@ if (show_inventory && mouse_check_button_pressed(mb_left)) {
             sell_held(held == undefined ? 0 : held.qty);
         } else if (clicked_slot != -1) {
             if (held == undefined) {
-                // Pega a pilha inteira (segurar e arrastar também funciona: ver abaixo)
                 if (inventory[clicked_slot] != undefined) {
-                    held = inventory[clicked_slot];
-                    inventory[clicked_slot] = undefined;
-                    held_from = clicked_slot;
-                    left_pick = true;
+                    if (keyboard_check(vk_shift) && has_other_window()) {
+                        // Shift + clique: move a pilha inteira para a outra janela
+                        quick_transfer(clicked_slot, inventory[clicked_slot].qty);
+                    } else {
+                        // Pega a pilha inteira (segurar e arrastar também funciona: ver abaixo)
+                        held = inventory[clicked_slot];
+                        inventory[clicked_slot] = undefined;
+                        held_from = clicked_slot;
+                        left_pick = true;
+                    }
                 }
             } else {
                 place_held_at(clicked_slot);
@@ -75,14 +80,20 @@ if (show_inventory && mouse_check_button_pressed(mb_right)) {
         var right_item = inventory[right_slot];
 
         if (held == undefined) {
-            // Pega metade dos itens do slot (arredondando para cima)
             if (right_item != undefined) {
                 var taken = ceil(right_item.qty / 2);
-                held = { type: right_item.type, qty: taken };
-                held_from = right_slot;
-                right_item.qty -= taken;
-                if (right_item.qty <= 0) {
-                    inventory[right_slot] = undefined;
+
+                if (keyboard_check(vk_shift) && has_other_window()) {
+                    // Shift + clique direito: move metade da pilha para a outra janela
+                    quick_transfer(right_slot, taken);
+                } else {
+                    // Pega metade dos itens do slot (arredondando para cima)
+                    held = { type: right_item.type, qty: taken };
+                    held_from = right_slot;
+                    right_item.qty -= taken;
+                    if (right_item.qty <= 0) {
+                        inventory[right_slot] = undefined;
+                    }
                 }
             }
         } else {

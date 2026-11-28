@@ -19,6 +19,10 @@ sell_open = false;
 sell_panel_w = sprite_get_width(spr_back_venda);
 sell_panel_h = sprite_get_height(spr_back_venda);
 
+// Outra janela com slots (baú, máquina...): array de slots como o inventário, ou undefined se não há.
+// Com ela aberta, Shift + clique move pilhas do inventário para lá (a janela de venda usa sell_open)
+other_slots = undefined;
+
 // Pilha na mão: { type, qty }, ou undefined se não segura nada.
 // Clicar numa pilha pega ela inteira (esquerdo) ou metade (direito); clicar de novo solta
 held = undefined;
@@ -128,5 +132,64 @@ sell_held = function(_amount) {
         if (held.qty <= 0) {
             held = undefined;
         }
+    }
+};
+
+/// Diz se há outra janela aberta para onde mover itens com Shift + clique
+has_other_window = function() {
+    return sell_open || other_slots != undefined;
+};
+
+/// Move itens de um slot do inventário para a outra janela (Shift + clique)
+/// Venda: vende direto. Outra janela com slots: completa pilhas do mesmo item, depois usa slots vazios,
+/// e o que não couber fica na mão do personagem
+quick_transfer = function(_slot, _amount) {
+    var item = inventory[_slot];
+    if (item == undefined) return;
+
+    var amount = min(_amount, item.qty);
+
+    // Janela de venda: vende a quantidade
+    if (sell_open) {
+        var game = instance_find(obj_game, 0);
+        if (game != noone && game.sell_item(item.type, amount) > 0) {
+            item.qty -= amount;
+            if (item.qty <= 0) {
+                inventory[_slot] = undefined;
+            }
+        }
+        return;
+    }
+
+    // Outra janela com slots
+    var left = amount;
+
+    // 1) Completa as pilhas do mesmo item que ainda têm espaço
+    for (var i = 0; i < array_length(other_slots) && left > 0; i++) {
+        var other_item = other_slots[i];
+        if (other_item != undefined && other_item.type == item.type && other_item.qty < pack_size) {
+            var added_qty = min(pack_size - other_item.qty, left);
+            other_item.qty += added_qty;
+            left -= added_qty;
+        }
+    }
+
+    // 2) Usa os slots vazios
+    for (var i = 0; i < array_length(other_slots) && left > 0; i++) {
+        if (other_slots[i] == undefined) {
+            var new_qty = min(pack_size, left);
+            other_slots[i] = { type: item.type, qty: new_qty };
+            left -= new_qty;
+        }
+    }
+
+    // Tira do slot de origem tudo o que foi pedido; o que não coube fica na mão
+    item.qty -= amount;
+    if (item.qty <= 0) {
+        inventory[_slot] = undefined;
+    }
+    if (left > 0) {
+        held = { type: item.type, qty: left };
+        held_from = _slot;
     }
 };
