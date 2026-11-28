@@ -3,7 +3,10 @@
 // --- Valores ajustáveis (placeholders de balanceamento) ---
 day_length_seconds = 120;  // Duração de cada dia, em segundos
 tax_base = 20;             // Imposto cobrado no fim do dia 1
-tax_growth = 1.5;          // Multiplicador do imposto a cada dia (1.5 = +50%)
+tax_growth = 1.5;          // Multiplicador do imposto a cada dia na 1ª era (1.5 = +50%)
+era_length = 5;            // Dias de cada era (a cada virada, o imposto e a taxa mudam)
+era_growth_factor = 0.8;   // A taxa de aumento de cada era é essa fração da anterior (+50%, +40%, +32%...)
+era_drop = 0.55;           // No 1º dia de uma era, o imposto cai para essa fração do último da era anterior
 starting_money = 0;
 
 // Preço de venda de cada tipo de item
@@ -51,7 +54,20 @@ go_to_menu = function() {
 
 /// Imposto cobrado no fim do dia informado
 get_tax = function(_day) {
-    var raw_tax = tax_base * power(tax_growth, _day - 1);
+    // Era do dia (0 = primeira) e posição dentro dela
+    var era = (_day - 1) div era_length;
+    var day_in_era = (_day - 1) mod era_length;
+
+    // Valor inicial da era: cai para uma fração do último imposto da era anterior
+    var era_base = tax_base;
+    for (var e = 1; e <= era; e++) {
+        var previous_growth = 1 + (tax_growth - 1) * power(era_growth_factor, e - 1);
+        era_base = era_base * power(previous_growth, era_length - 1) * era_drop;
+    }
+
+    // Taxa de aumento da era: diminui a cada era
+    var era_growth = 1 + (tax_growth - 1) * power(era_growth_factor, era);
+    var raw_tax = era_base * power(era_growth, day_in_era);
 
     // Arredonda pelo último dígito: de 0 a 5 (exclusive) vai para 5; de 5 a 10 (exclusive) vai para a dezena de cima
     var units = raw_tax mod 10;
