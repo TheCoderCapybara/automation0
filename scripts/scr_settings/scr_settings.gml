@@ -148,9 +148,36 @@ function video_resolution_exists(_width, _height) {
     return false;
 }
 
+/// @desc Tamanho do monitor em que a janela está (com vários monitores, o display_get_width pode devolver o principal).
+/// @returns {Struct} { w, h }
+function video_get_screen_size() {
+    // Monitores que a janela ocupa: 8 valores cada (área da janela nele e posição do monitor)
+    var window_x = window_get_x();
+    var window_y = window_get_y();
+    var rects = window_get_visible_rects(window_x, window_y, window_x + window_get_width(), window_y + window_get_height());
+
+    // Escolhe o monitor onde a janela ocupa a maior área
+    var best_index = -1;
+    var best_area = 0;
+    for (var i = 0; i + 7 < array_length(rects); i += 8) {
+        var area = (rects[i + 2] - rects[i]) * (rects[i + 3] - rects[i + 1]);
+        if (area > best_area) {
+            best_area = area;
+            best_index = i;
+        }
+    }
+
+    // Janela fora de todos os monitores: usa o tamanho padrão do sistema
+    if (best_index == -1) {
+        return { w: display_get_width(), h: display_get_height() };
+    }
+    return { w: rects[best_index + 6] - rects[best_index + 4], h: rects[best_index + 7] - rects[best_index + 5] };
+}
+
 /// @desc Diz se uma janela desse tamanho cabe na tela (com folga para a barra de título e a barra de tarefas).
 function video_resolution_fits(_width, _height) {
-    return (_width <= display_get_width() && _height <= display_get_height() - 80);
+    var screen = video_get_screen_size();
+    return (_width <= screen.w && _height <= screen.h - 80);
 }
 
 /// @desc Resoluções de janela que o jogador pode escolher: todas as da lista.
@@ -181,7 +208,7 @@ function video_get_resolution_text(_width, _height) {
 function video_get_size(_fullscreen) {
     // Tela cheia: o jogo ocupa a tela inteira, seja qual for a proporção
     if (_fullscreen) {
-        return { w: display_get_width(), h: display_get_height() };
+        return video_get_screen_size();
     }
 
     // Janela: a resolução escolhida, se ainda cabe na tela
@@ -233,7 +260,8 @@ function settings_apply_video() {
     // Em janela, ajusta o tamanho e centraliza (em tela cheia o sistema cuida da janela).
     // Uma resolução maior que a tela é reduzida, mantendo a proporção, para a janela caber
     if (!video.fullscreen) {
-        var fit = min(1, display_get_width() / size.w, (display_get_height() - 80) / size.h);
+        var screen = video_get_screen_size();
+        var fit = min(1, screen.w / size.w, (screen.h - 80) / size.h);
         window_set_size(max(1, round(size.w * fit)), max(1, round(size.h * fit)));
         window_center();
     }
