@@ -10,8 +10,9 @@ if (gui != noone) {
         gui.show_inventory = gui.sell_open;
     }
 
-    // Se o jogador se afastar, o espaço de venda fecha (o inventário continua aberto)
-    if (!player_near) {
+    // Se o jogador se afastar, o espaço de venda e o inventário fecham juntos
+    if (!player_near && gui.sell_open) {
         gui.sell_open = false;
+        gui.show_inventory = false;
     }
 }
