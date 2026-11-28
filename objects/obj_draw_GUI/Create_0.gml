@@ -17,6 +17,9 @@ item_sprites[$ "stone"] = spr_stone;
 // Arrastar itens: índice do slot que está sendo arrastado (-1 = nenhum)
 drag_slot = -1;
 
+// Pilha segurada com o botão direito: { type, qty }, ou undefined se não segura nada
+held = undefined;
+
 // A GUI acompanha o tamanho do jogo na tela (definido em settings_apply_video)
 // Painel do inventário centralizado na GUI e grade de slots, com a margem do painel
 panel_w = sprite_get_width(spr_back_inventory);
@@ -50,4 +53,18 @@ get_slot_at = function(_x, _y) {
         return -1;
     }
     return row * inventory_cols + col;
+};
+
+/// Devolve ao inventário os itens segurados (o que não couber continua na mão)
+return_held = function() {
+    if (held == undefined) return;
+
+    while (held.qty > 0) {
+        if (!scr_add_to_inventory(held.type)) break;
+        held.qty -= 1;
+    }
+
+    if (held.qty <= 0) {
+        held = undefined;
+    }
 };

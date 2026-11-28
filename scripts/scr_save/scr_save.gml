@@ -54,6 +54,11 @@ function save_game() {
         return false;
     }
 
+    // Itens na mão (pegos com o botão direito) voltam ao inventário antes de salvar
+    with (gui) {
+        return_held();
+    }
+
     // Tiles da ilha: x e y de cada tile de grama, um depois do outro
     var tiles = [];
     for (var i = 0; i < instance_number(obj_chao_grama); i++) {

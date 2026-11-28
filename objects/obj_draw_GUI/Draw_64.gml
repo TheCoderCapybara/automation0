@@ -40,5 +40,14 @@ if (drag_slot != -1 && inventory[drag_slot] != undefined) {
     }
 }
 
+// Os itens pegos com o botão direito também acompanham o mouse
+if (held != undefined) {
+    var held_x = device_mouse_x_to_gui(0);
+    var held_y = device_mouse_y_to_gui(0);
+
+    draw_sprite(item_sprites[$ held.type], 0, held_x, held_y);
+    draw_text(held_x + 12, held_y + 18, string(held.qty));
+}
+
 draw_set_halign(fa_left);
 draw_set_valign(fa_top);
