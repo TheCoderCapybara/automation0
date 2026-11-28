@@ -4,6 +4,14 @@ var cx = gui_w / 2;
 draw_set_halign(fa_center);
 draw_set_valign(fa_middle);
 
+// Na pausa, escurece o fundo
+if (in_game) {
+    draw_set_color(c_black);
+    draw_set_alpha(0.7);
+    draw_rectangle(0, 0, gui_w, gui_h, false);
+    draw_set_alpha(1);
+}
+
 // Título do jogo (fica escondido nas configurações)
 draw_set_color(c_white);
 if (screen != "settings") {
@@ -90,9 +98,10 @@ for (var i = 0; i < array_length(buttons); i++) {
     draw_set_color(c_white);
     draw_rectangle(button.x, button.y, button.x + button.w, button.y + button.h, true);
 
-    // Texto do botão (na tecla esperando, em amarelo)
+    // Texto do botão (em amarelo: tecla esperando ou resolução escolhida na lista)
     var is_waiting = (string_pos("bind_", button.id) == 1 && waiting_key != "" && button.id == "bind_" + waiting_key);
-    if (is_waiting) draw_set_color(c_yellow);
+    var is_selected = (variable_struct_exists(button, "selected") && button.selected);
+    if (is_waiting || is_selected) draw_set_color(c_yellow);
     draw_text_transformed(button.x + button.w / 2, button.y + button.h / 2, button.label, 1.5, 1.5, 0);
     draw_set_color(c_white);
 
@@ -103,10 +112,26 @@ for (var i = 0; i < array_length(buttons); i++) {
         draw_set_halign(fa_center);
     }
 
-    // Valor entre as setas (ex.: a resolução), no meio da linha
-    if (variable_struct_exists(button, "value_text")) {
-        draw_text_transformed(button.x + row_w / 2, button.y + button.h / 2, button.value_text, 1.5, 1.5, 0);
+    // Setinha à direita da caixa de resolução (aponta para cima com a lista aberta)
+    if (variable_struct_exists(button, "has_arrow")) {
+        var arrow_x = button.x + button.w - 24;
+        var arrow_y = button.y + button.h / 2;
+        if (dropdown_open) {
+            draw_triangle(arrow_x - 8, arrow_y + 4, arrow_x + 8, arrow_y + 4, arrow_x, arrow_y - 6, false);
+        } else {
+            draw_triangle(arrow_x - 8, arrow_y - 4, arrow_x + 8, arrow_y - 4, arrow_x, arrow_y + 6, false);
+        }
     }
+}
+
+// Botão temporário para voltar à resolução padrão, no meio da janela
+if (revert_timer > 0) {
+    var seconds_left = ceil(revert_timer / game_get_speed(gamespeed_fps));
+    draw_set_color(make_color_rgb(35, 60, 90));
+    draw_rectangle(revert_x, revert_y, revert_x + revert_w, revert_y + revert_h, false);
+    draw_set_color(c_white);
+    draw_rectangle(revert_x, revert_y, revert_x + revert_w, revert_y + revert_h, true);
+    draw_text_transformed(revert_x + revert_w / 2, revert_y + revert_h / 2, "Voltar a resolucao padrao (" + string(seconds_left) + ")", 1.5, 1.5, 0);
 }
 
 // Restaura o estado do desenho

@@ -1,5 +1,11 @@
 // Menu inicial: Continuar, Criar novo jogo e Configurações.
+// Também é o menu de pausa do jogo (in_game = true): Voltar ao jogo, Configurações e Sair.
 // Os textos não usam acentos porque a fonte padrão pode não exibi-los.
+
+// Dentro do jogo (pausa): o obj_game cria este objeto já com in_game = true
+if (!variable_instance_exists(id, "in_game")) {
+    in_game = false;
+}
 
 // Carrega as configurações (só na primeira vez) e aplica o vídeo e o som escolhidos
 settings_init();
@@ -10,7 +16,7 @@ gui_h = BASE_HEIGHT;
 display_set_gui_size(gui_w, gui_h);
 
 // --- Título (o nome do jogo ainda vai mudar) ---
-title_text = "Automation";
+title_text = in_game ? "Pausado" : "Automation";
 title_y = 150;
 
 // --- Layout dos botões ---
@@ -33,12 +39,22 @@ volume_bar_w = row_w;
 volume_bar_h = row_h;
 dragging_volume = false;  // true enquanto o jogador arrasta a barra
 
+// --- Botão temporário para voltar à resolução padrão (aparece após mudar a resolução) ---
+revert_duration = 5 * game_get_speed(gamespeed_fps);  // 5 segundos, em frames
+revert_timer = 0;   // Frames restantes do botão (0 = escondido)
+revert_w = 420;
+revert_h = 70;
+revert_x = (gui_w - revert_w) / 2;
+revert_y = (gui_h - revert_h) / 2;
+
 // --- Estado ---
 screen = "main";         // "main", "new_game", "settings" ou "quit"
 settings_tab = "controls";  // "controls", "video" ou "audio"
 waiting_key = "";        // Ação que espera uma tecla nova (vazio = nenhuma)
 buttons = [];            // Botões da tela atual (refeitos todo frame)
 hover_index = -1;        // Botão sob o mouse (-1 = nenhum)
+dropdown_open = false;   // Lista de resoluções aberta
+input_delay = 2;         // Frames sem aceitar Esc (o Esc que pausou o jogo não pode já despausar)
 
 // --- Último jogo salvo ---
 has_save = (save_read() != undefined);
@@ -63,6 +79,24 @@ make_button = function(_id, _label, _x, _y, _w, _enabled, _caption) {
     return { id: _id, label: _label, x: _x, y: _y, w: _w, h: button_h, enabled: _enabled, caption: _caption };
 };
 
+/// Resoluções que o jogador pode escolher: 0 (automática) e as padrões 16:9 que cabem na tela
+get_resolution_options = function() {
+    var options = [0];
+    var available = video_get_available_resolutions();
+    for (var i = 0; i < array_length(available); i++) {
+        array_push(options, available[i]);
+    }
+    return options;
+};
+
+/// Texto de uma resolução (0 = automática)
+get_resolution_text = function(_width) {
+    if (_width == 0) {
+        return "Automatica";
+    }
+    return string(_width) + " x " + string(_width * 9 / 16);
+};
+
 /// Monta a lista de botões da tela atual
 build_buttons = function() {
     var list = [];
@@ -70,8 +104,15 @@ build_buttons = function() {
     var left = cx - button_w / 2;
     var step = button_h + button_gap;
 
-    if (screen == "main") {
-        // De cima para baixo: continuar, novo jogo, configurações
+    if (screen == "main" && in_game) {
+        // Pausa, de cima para baixo: voltar ao jogo, configurações, sair
+        array_push(list, make_button("resume", "Voltar ao jogo", left, first_button_y, button_w, true, ""));
+        array_push(list, make_button("settings", "Configuracoes", left, first_button_y + step, button_w, true, ""));
+        array_push(list, make_button("quit", "Sair do jogo", left, first_button_y + step * 2, button_w, true, ""));
+    }
+
+    if (screen == "main" && !in_game) {
+        // De cima para baixo: continuar, novo jogo, configurações, sair
         array_push(list, make_button("continue", "Continuar", left, first_button_y, button_w, has_save, ""));
         array_push(list, make_button("new_game", "Criar novo jogo", left, first_button_y + step, button_w, true, ""));
         array_push(list, make_button("settings", "Configuracoes", left, first_button_y + step * 2, button_w, true, ""));
@@ -119,29 +160,31 @@ build_buttons = function() {
         if (settings_tab == "video") {
             var video = global.settings.video;
 
-            // Resolução da janela: automática ou uma das padrões 16:9
-            var size_text = "Automatica";
-            if (video.window_width != 0) {
-                size_text = string(video.window_width) + " x " + string(video.window_width * 9 / 16);
-            }
-
             var fullscreen_button = make_button("toggle_fullscreen", video.fullscreen ? "Ligada" : "Desligada", row_x, row_y, row_w, true, "Tela cheia");
 
-            // Resolução: seta para a esquerda e para a direita, com o valor atual no meio
-            var arrow_w = 60;
-            var previous_button = make_button("res_previous", "<", row_x, row_y + row_step, arrow_w, !video.fullscreen, "Resolucao da janela");
-            var next_button = make_button("res_next", ">", row_x + row_w - arrow_w, row_y + row_step, arrow_w, !video.fullscreen, "");
-            previous_button.value_text = size_text;
-            next_button.value_text = "";
+            // Resolução da janela: caixa com a resolução escolhida e uma setinha que abre a lista
+            var resolution_button = make_button("res_toggle", get_resolution_text(video.window_width), row_x, row_y + row_step, row_w, !video.fullscreen, "Resolucao da janela");
+            resolution_button.has_arrow = true;
+
             var vsync_button = make_button("toggle_vsync", video.vsync ? "Ligado" : "Desligado", row_x, row_y + row_step * 2, row_w, true, "Vsync");
             fullscreen_button.h = row_h;
-            previous_button.h = row_h;
-            next_button.h = row_h;
+            resolution_button.h = row_h;
             vsync_button.h = row_h;
             array_push(list, fullscreen_button);
-            array_push(list, previous_button);
-            array_push(list, next_button);
+            array_push(list, resolution_button);
             array_push(list, vsync_button);
+
+            // Lista de resoluções aberta: entra por último, para ficar por cima dos botões de baixo
+            if (dropdown_open) {
+                var options = get_resolution_options();
+                for (var i = 0; i < array_length(options); i++) {
+                    var option_y = row_y + row_step + row_h + 2 + row_h * i;
+                    var option_button = make_button("res_option_" + string(options[i]), get_resolution_text(options[i]), row_x, option_y, row_w, true, "");
+                    option_button.h = row_h;
+                    option_button.selected = (options[i] == video.window_width);
+                    array_push(list, option_button);
+                }
+            }
         }
 
         // Aba de som: o volume é uma barra desenhada e tratada à parte (ver Step e Draw)
@@ -162,7 +205,30 @@ run_action = function(_id) {
         return;
     }
 
+    // Itens da lista de resoluções: "res_option_<largura>" (0 = automática)
+    if (string_pos("res_option_", _id) == 1) {
+        var chosen_width = real(string_delete(_id, 1, 11));
+        dropdown_open = false;
+
+        // Só aplica (e oferece voltar ao padrão) se a resolução mudou
+        if (chosen_width != video.window_width) {
+            video.window_width = chosen_width;
+            settings_apply_video();
+            settings_save();
+            revert_timer = revert_duration;
+        }
+        return;
+    }
+
     switch (_id) {
+        case "resume":
+            // Volta ao jogo e fecha este menu de pausa
+            with (obj_game) {
+                resume_game();
+            }
+            instance_destroy();
+            break;
+
         case "continue":
             // O obj_island recria o mundo salvo quando a sala começa
             global.continue_game = true;
@@ -191,6 +257,7 @@ run_action = function(_id) {
             screen = "settings";
             settings_tab = "controls";
             waiting_key = "";
+            dropdown_open = false;
             break;
 
         case "back":
@@ -198,6 +265,8 @@ run_action = function(_id) {
                 settings_save();
             }
             waiting_key = "";
+            dropdown_open = false;
+            revert_timer = 0;
             screen = "main";
             break;
 
@@ -226,10 +295,12 @@ run_action = function(_id) {
         case "tab_video":
             settings_tab = "video";
             waiting_key = "";
+            dropdown_open = false;
             break;
         case "tab_audio":
             settings_tab = "audio";
             waiting_key = "";
+            dropdown_open = false;
             break;
 
         case "reset_controls":
@@ -240,26 +311,22 @@ run_action = function(_id) {
 
         case "toggle_fullscreen":
             video.fullscreen = !video.fullscreen;
+            dropdown_open = false;
             settings_apply_video();
             settings_save();
             break;
 
+        case "res_toggle":
+            // Abre ou fecha a lista de resoluções
+            dropdown_open = !dropdown_open;
+            break;
 
-        case "res_previous":
-        case "res_next":
-            // Automática, depois cada resolução padrão que cabe na tela; as setas dão a volta nas pontas
-            var options = [0];
-            var available = video_get_available_resolutions();
-            for (var i = 0; i < array_length(available); i++) {
-                array_push(options, available[i]);
-            }
-
-            var current_index = max(0, array_get_index(options, video.window_width));  // Valor desconhecido vira automática
-            var direction_step = (_id == "res_next") ? 1 : -1;
-            var new_index = (current_index + direction_step + array_length(options)) mod array_length(options);
-            video.window_width = options[new_index];
+        case "revert_resolution":
+            // Volta à resolução padrão (automática)
+            video.window_width = 0;
             settings_apply_video();
             settings_save();
+            revert_timer = 0;
             break;
 
         case "toggle_vsync":

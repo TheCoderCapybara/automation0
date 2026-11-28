@@ -33,21 +33,7 @@ if (state == "playing") {
         draw_set_alpha(1);
     }
 } else if (state == "paused") {
-    // Tela de pausa
-    draw_set_color(c_black);
-    draw_set_alpha(0.7);
-    draw_rectangle(0, 0, gui_w, gui_h, false);
-    draw_set_alpha(1);
-
-    draw_set_color(c_white);
-    draw_set_halign(fa_center);
-    draw_set_valign(fa_middle);
-    draw_text_transformed(gui_w / 2, gui_h / 2 - 60, "PAUSADO", 3, 3, 0);
-    draw_text_transformed(gui_w / 2, gui_h / 2 + 10, "Jogo salvo", 1.5, 1.5, 0);
-    draw_text_transformed(gui_w / 2, gui_h / 2 + 60, "Esc - Continuar", 1.5, 1.5, 0);
-    draw_text_transformed(gui_w / 2, gui_h / 2 + 90, "M - Menu inicial", 1.5, 1.5, 0);
-    draw_set_halign(fa_left);
-    draw_set_valign(fa_top);
+    // A tela de pausa é desenhada pelo obj_menu
 } else {
     // Tela de fim de jogo
     draw_set_color(c_black);

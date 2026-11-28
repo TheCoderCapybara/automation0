@@ -35,14 +35,8 @@ if (state == "game_over") {
     exit;
 }
 
-// Jogo pausado: Esc continua, M volta ao menu (o jogo já foi salvo ao pausar)
+// Jogo pausado: o menu de pausa (obj_menu) cuida dos botões e do Esc
 if (state == "paused") {
-    if (keyboard_check_pressed(vk_escape)) {
-        resume_game();
-    }
-    if (keyboard_check_pressed(ord("M"))) {
-        go_to_menu();
-    }
     exit;
 }
 

@@ -2,6 +2,22 @@
 var mouse_gui_x = device_mouse_x_to_gui(0);
 var mouse_gui_y = device_mouse_y_to_gui(0);
 
+// Botão temporário de voltar à resolução padrão
+if (revert_timer > 0) {
+    revert_timer -= 1;
+
+    if (mouse_check_button_pressed(mb_left)) {
+        if (point_in_rectangle(mouse_gui_x, mouse_gui_y, revert_x, revert_y, revert_x + revert_w, revert_y + revert_h)) {
+            // Clicou no botão: volta ao padrão (e o clique não vale para mais nada)
+            run_action("revert_resolution");
+            exit;
+        }
+
+        // Clicou em qualquer outro lugar: o botão some e a resolução fica
+        revert_timer = 0;
+    }
+}
+
 // Esperando uma tecla nova para um controle
 if (waiting_key != "") {
     if (keyboard_check_pressed(vk_anykey)) {
@@ -34,9 +50,18 @@ if (screen == "new_game") {
     keyboard_string = seed_input;
 }
 
-// Atalhos de teclado
-if (keyboard_check_pressed(vk_escape) && screen != "main") {
-    run_action("back");
+// Atalhos de teclado (Esc fecha a lista, volta uma tela ou, na pausa, volta ao jogo)
+if (input_delay > 0) {
+    input_delay -= 1;
+} else if (keyboard_check_pressed(vk_escape)) {
+    if (dropdown_open) {
+        dropdown_open = false;
+    } else if (screen != "main") {
+        run_action("back");
+    } else if (in_game) {
+        run_action("resume");
+        exit;
+    }
 }
 if (keyboard_check_pressed(vk_enter) && screen == "new_game") {
     run_action("start");
@@ -77,7 +102,18 @@ for (var i = 0; i < array_length(buttons); i++) {
     }
 }
 
-// Clique no botão
-if (hover_index != -1 && mouse_check_button_pressed(mb_left)) {
-    run_action(buttons[hover_index].id);
+// Clique
+if (mouse_check_button_pressed(mb_left)) {
+    // Com a lista de resoluções aberta, só ela e a caixa respondem; um clique fora só fecha a lista
+    if (dropdown_open) {
+        var clicked_id = (hover_index != -1) ? buttons[hover_index].id : "";
+        if (clicked_id != "res_toggle" && string_pos("res_option_", clicked_id) != 1) {
+            dropdown_open = false;
+            hover_index = -1;
+        }
+    }
+
+    if (hover_index != -1) {
+        run_action(buttons[hover_index].id);
+    }
 }

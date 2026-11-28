@@ -29,20 +29,21 @@ game_over_mode = "menu";  // "menu" (escolher) ou "typing" (digitando a seed)
 seed_input = "";          // Seed digitada pelo jogador
 seed_max_digits = 9;      // Máximo de dígitos da seed
 
-/// Pausa o jogo: salva e congela tudo (este controlador continua ativo)
+/// Pausa o jogo: salva, congela tudo (este controlador continua ativo) e abre o menu de pausa
 pause_game = function() {
     save_game();
     state = "paused";
     instance_deactivate_all(true);
+    instance_create_depth(0, 0, -100, obj_menu, { in_game: true });
 };
 
-/// Despausa o jogo
+/// Despausa o jogo (o menu de pausa se fecha sozinho)
 resume_game = function() {
     instance_activate_all();
     state = "playing";
 };
 
-/// Volta ao menu inicial (o jogo já foi salvo ao pausar, ou apagado ao morrer)
+/// Volta ao menu inicial (usado na tela de fim de jogo; o save foi apagado ao morrer)
 go_to_menu = function() {
     instance_activate_all();
     room_goto(rm_menu);
