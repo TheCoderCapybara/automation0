@@ -14,6 +14,9 @@ item_sprites = {};
 item_sprites[$ "log"] = spr_log;
 item_sprites[$ "stone"] = spr_stone;
 
+// Arrastar itens: índice do slot que está sendo arrastado (-1 = nenhum)
+drag_slot = -1;
+
 // A GUI acompanha o tamanho do jogo na tela (definido em settings_apply_video)
 // Painel do inventário centralizado na GUI e grade de slots, com a margem do painel
 panel_w = sprite_get_width(spr_back_inventory);
@@ -37,3 +40,14 @@ update_layout = function() {
     close_y = panel_y + 4;
 };
 update_layout();
+
+/// Devolve o índice do slot sob a posição da GUI, ou -1 se estiver fora da grade
+get_slot_at = function(_x, _y) {
+    var col = floor((_x - inventory_x) / slot_size);
+    var row = floor((_y - inventory_y) / slot_size);
+
+    if (col < 0 || col >= inventory_cols || row < 0 || row >= inventory_rows) {
+        return -1;
+    }
+    return row * inventory_cols + col;
+};

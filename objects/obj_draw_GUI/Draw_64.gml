@@ -10,16 +10,33 @@ draw_set_valign(fa_bottom);
 for (var i = 0; i < inventory_cols * inventory_rows; i++) {
     var slot_x = inventory_x + (i mod inventory_cols) * slot_size;
     var slot_y = inventory_y + (i div inventory_cols) * slot_size;
+    draw_set_alpha(1);
     draw_sprite(spr_inventory, 0, slot_x, slot_y);
 
     var slot = inventory[i];
     if (slot == undefined) continue;
+
+    // O item que está sendo arrastado fica translúcido no lugar de origem
+    draw_set_alpha((i == drag_slot) ? 0.35 : 1);
 
     // Os sprites dos itens têm origem no centro
     draw_sprite(item_sprites[$ slot.type], 0, slot_x + 16, slot_y + 16);
 
     if (slot.qty > 1) {
         draw_text(slot_x + 28, slot_y + 34, string(slot.qty));
+    }
+}
+draw_set_alpha(1);
+
+// O item arrastado acompanha o mouse, por cima de tudo
+if (drag_slot != -1 && inventory[drag_slot] != undefined) {
+    var dragged = inventory[drag_slot];
+    var drag_x = device_mouse_x_to_gui(0);
+    var drag_y = device_mouse_y_to_gui(0);
+
+    draw_sprite(item_sprites[$ dragged.type], 0, drag_x, drag_y);
+    if (dragged.qty > 1) {
+        draw_text(drag_x + 12, drag_y + 18, string(dragged.qty));
     }
 }
 
